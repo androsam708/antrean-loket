@@ -16,7 +16,6 @@
         button { background-color: #3498db; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.3s; margin-top: 10px; }
         button:hover { background-color: #2980b9; }
         
-        /* GAYA TOMBOL ISTIRAHAT / KOSONGKAN BARU */
         .btn-break { background-color: #e74c3c; margin-top: 10px; }
         .btn-break:hover { background-color: #c0392b; }
 
@@ -50,7 +49,6 @@
     </div>
 
     <button onclick="updateAntreanManual()">Update Nomor Ini</button>
-    
     <button class="btn-break" onclick="kosongkanStatusLoket()">Istirahat / Kosongkan Loket</button>
 
     <div class="status-box" id="statusBox">
@@ -69,14 +67,16 @@
 
     let dataLoketLokal = {};
 
+    // Mengambil data terpusat dari Firebase
     db.ref('dataAntrean').on('value', (snapshot) => {
         dataLoketLokal = snapshot.val() || {};
-        cekStatusLoket();
+        cekStatusLoket(); // Otomatis refresh tulisan di bawah saat ada perubahan
     });
 
     function cekStatusLoket() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
-        let nomor = dataLoketLokal[loketTerpilih] || "-";
+        let nomor = dataLoketLokal[loketTerpilih] !== undefined ? dataLoketLokal[loketTerpilih] : "-";
+        
         let statusBox = document.getElementById('statusBox');
         let statusTeks = document.getElementById('statusTeks');
 
@@ -95,12 +95,18 @@
 
         let nomorAngka = parseInt(nomorInput);
 
-        db.ref('dataAntrean/' + loketTerpilih).set(nomorAngka);
+        // Kirim data nomor ke database
+        db.ref('dataAntrean/' + loketTerpilih).set(nomorAngka).then(() => {
+            // Setelah sukses terkirim, pastikan tampilan lokal ikut terupdate
+            cekStatusLoket();
+        });
 
+        // Tambah poin rekap kerja admin
         db.ref('hitunganKerjaLoket/' + loketTerpilih).transaction((currentValue) => {
             return (currentValue || 0) + 1;
         });
 
+        // Potong dari daftar ruangan
         db.ref('nomorDalamRuangan').once('value').then((snapshot) => {
             let listNomor = snapshot.val() || [];
             let index = listNomor.indexOf(nomorAngka);
@@ -113,16 +119,13 @@
         document.getElementById('nomorAntrean').value = ""; 
     }
 
-    /* FUNGSI BARU: Mengubah nomor aktif kembali menjadi tanda minus (-) */
     function kosongkanStatusLoket() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
         
         if (confirm(`Kosongkan status pelayanan untuk ${loketTerpilih.replace(/-/g, '/')}?`)) {
-            // Mengirimkan tanda "-" ke Firebase
-            db.ref('dataAntrean/' + loketTerpilih).set("-");
-            
-            // Mengirimkan sinyal pembaruan
-            db.ref('antreanUpdated').set(Date.now());
+            db.ref('dataAntrean/' + loketTerpilih).set("-").then(() => {
+                cekStatusLoket();
+            });
         }
     }
 </script>
