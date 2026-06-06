@@ -20,26 +20,7 @@
         button:hover { background-color: #2980b9; }
         .btn-danger { background-color: #e74c3c; }
         .btn-danger:hover { background-color: #c0392b; }
-        .btn-orange { background-color: #e67e22; color: white; }
-        .btn-orange:hover { background-color: #d35400; }
-        
-        .list-preview { 
-            max-height: 200px; 
-            overflow-y: auto; 
-            background: #edf2f7; 
-            padding: 15px; 
-            border-radius: 6px; 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            font-size: 26px;       
-            font-weight: 800;      
-            color: #2c3e50; 
-            line-height: 1.5;
-            letter-spacing: 1px;
-            word-break: break-all; 
-            margin-top: 10px; 
-        }
-        .list-preview em { font-size: 16px; font-weight: normal; color: #7f8c8d; }
-        .petunjuk { font-size: 0.85em; color: #7f8c8d; margin-top: 5px; display: block; font-style: italic; }
+        .list-preview { max-height: 150px; overflow-y: auto; background: #edf2f7; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 14px; word-break: break-all; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -66,35 +47,26 @@
         <h3>2. Input Nomor Tertentu (Sisipan / Terlewat)</h3>
         <div class="form-group">
             <label for="nomorSpesifik">Masukkan Nomor:</label>
-            <input type="text" id="nomorSpesifik" placeholder="Contoh: 9, 12, 15 atau 9 12 15">
-            <span class="petunjuk">*Bisa memasukkan banyak nomor sekaligus dipisah koma atau spasi.</span>
+            <input type="number" id="nomorSpesifik" placeholder="Contoh: 9" min="1">
         </div>
-        <button onclick="tambahNomorSpesifik()">Masukkan Semua Nomor Ini</button>
+        <button onclick="tambahNomorSpesifik()">Masukkan Nomor Ini</button>
     </div>
 
     <div class="section-box">
         <h3>Nomor yang Berada di Dalam Ruangan Saat Ini:</h3>
         <div class="list-preview" id="previewNomor">-</div>
-        
-        <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button class="btn-danger" onclick="kosongkanRuangan()" style="flex: 1;">Kosongkan Daftar</button>
-            <button class="btn-orange" onclick="paksaResetSistem()" style="flex: 1;">Tombol Darurat (Reset Sistem)</button>
-        </div>
+        <button class="btn-danger" onclick="kosongkanRuangan()" style="margin-top: 15px;">Kosongkan Ruangan / Reset</button>
     </div>
 </div>
 
 <script>
+    // Ambil data ruangan dari localStorage atau buat baru jika kosong
     function ambilDataRuangan() {
         let data = localStorage.getItem('nomorDalamRuangan');
-        if (!data) return [];
-        try {
-            let parsed = JSON.parse(data);
-            return Array.isArray(parsed) ? parsed : [];
-        } catch(e) {
-            return [];
-        }
+        return data ? JSON.parse(data) : [];
     }
 
+    // Fungsi update tampilan pratinjau di halaman input
     function perbaruiPreview() {
         let urutanNomor = ambilDataRuangan();
         let previewBox = document.getElementById('previewNomor');
@@ -102,11 +74,11 @@
         if(urutanNomor.length === 0) {
             previewBox.innerHTML = "<em>Tidak ada nomor di dalam ruangan.</em>";
         } else {
-            let angkaBersih = urutanNomor.map(n => parseInt(n)).filter(n => !isNaN(n));
-            previewBox.innerText = angkaBersih.join(', ');
+            previewBox.innerText = urutanNomor.join(', ');
         }
     }
 
+    // Aksi Fitur 1: Tambah Rentang Nomor
     function tambahRangeNomor() {
         let dari = parseInt(document.getElementById('rangeDari').value);
         let sampai = parseInt(document.getElementById('rangeSampai').value);
@@ -128,72 +100,51 @@
         }
         
         simpanData(dataSekarang);
+        
+        // Reset Input
         document.getElementById('rangeDari').value = "";
         document.getElementById('rangeSampai').value = "";
     }
 
+    // Aksi Fitur 2: Tambah Nomor Tertentu
     function tambahNomorSpesifik() {
-        let inputTeks = document.getElementById('nomorSpesifik').value;
+        let nomor = parseInt(document.getElementById('nomorSpesifik').value);
 
-        if (!inputTeks || inputTeks.trim() === "") {
-            alert("Silakan masukkan nomor terlebih dahulu!");
+        if (isNaN(nomor) || nomor < 1) {
+            alert("Silakan masukkan nomor yang valid!");
             return;
         }
 
-        let potonganNomor = inputTeks.split(/[\s,]+/);
         let dataSekarang = ambilDataRuangan();
-        let adaNomorBaru = false;
-
-        potonganNomor.forEach(item => {
-            if(item.trim() !== "") {
-                let nomor = parseInt(item.trim());
-                if (!isNaN(nomor) && nomor > 0) {
-                    if (!dataSekarang.includes(nomor)) {
-                        dataSekarang.push(nomor);
-                        adaNomorBaru = true;
-                    }
-                }
-            }
-        });
-
-        if (!adaNomorBaru) {
-            alert("Tidak ada nomor baru yang valid atau nomor sudah dimasukkan.");
+        if (dataSekarang.includes(nomor)) {
+            alert("Nomor tersebut sudah ada di dalam ruangan!");
             return;
         }
 
+        dataSekarang.push(nomor);
         simpanData(dataSekarang);
-        document.getElementById('nomorSpesifik').value = ""; 
+        
+        document.getElementById('nomorSpesifik').value = ""; // Reset input
     }
 
+    // Fungsi simpan terpusat
     function simpanData(data) {
-        let dataAngka = data.map(n => parseInt(n)).filter(n => !isNaN(n));
-        dataAngka.sort((a, b) => a - b);
+        // Urutkan nomor dari terkecil ke terbesar agar rapi saat dilihat
+        data.sort((a, b) => a - b);
         
-        localStorage.setItem('nomorDalamRuangan', JSON.stringify(dataAngka));
-        localStorage.setItem('antreanUpdated', Date.now()); 
+        localStorage.setItem('nomorDalamRuangan', JSON.stringify(data));
+        localStorage.setItem('antreanUpdated', Date.now()); // Pemicu layar monitor berubah
         perbaruiPreview();
     }
 
+    // Fungsi menghapus semua daftar nomor di ruangan
     function kosongkanRuangan() {
-        if(confirm("Apakah Anda yakin ingin mengosongkan semua daftar nomor?")) {
+        if(confirm("Apakah Anda yakin ingin mengosongkan semua daftar nomor di dalam ruangan?")) {
             simpanData([]);
         }
     }
 
-    function paksaResetSistem() {
-        localStorage.setItem('nomorDalamRuangan', JSON.stringify([]));
-        localStorage.setItem('antreanUpdated', Date.now());
-        perbaruiPreview();
-        alert("Sistem berhasil di-reset bersih!");
-    }
-
-    // LISTENER OTOMATIS: Jika halaman loket menghapus nomor, halaman ini ikut update visualnya tanpa refresh
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'nomorDalamRuangan' || e.key === 'antreanUpdated') {
-            perbaruiPreview();
-        }
-    });
-
+    // Jalankan preview saat pertama kali dimuat
     perbaruiPreview();
 </script>
 </body>
