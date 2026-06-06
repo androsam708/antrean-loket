@@ -72,12 +72,11 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
     const firebaseConfig = { databaseURL: "https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/" };
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let listNomorGlobal = [];
 
-    // Dengarkan perubahan data ruangan secara online
     db.ref('nomorDalamRuangan').on('value', (snapshot) => {
         listNomorGlobal = snapshot.val() || [];
         perbaruiPreview();
@@ -110,7 +109,6 @@
                 listNomorGlobal.push(i);
             }
         }
-        
         simpanData(listNomorGlobal);
         document.getElementById('rangeDari').value = "";
         document.getElementById('rangeSampai').value = "";
@@ -138,9 +136,7 @@
             }
         });
 
-        if (adaNomorBaru) {
-            simpanData(listNomorGlobal);
-        }
+        if (adaNomorBaru) simpanData(listNomorGlobal);
         document.getElementById('nomorSpesifik').value = ""; 
     }
 
