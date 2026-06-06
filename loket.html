@@ -12,8 +12,14 @@
         label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
         select, input, button { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
         select:focus, input:focus { border-color: #3498db; outline: none; }
+        
         button { background-color: #3498db; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.3s; margin-top: 10px; }
         button:hover { background-color: #2980b9; }
+        
+        /* GAYA TOMBOL ISTIRAHAT / KOSONGKAN BARU */
+        .btn-break { background-color: #e74c3c; margin-top: 10px; }
+        .btn-break:hover { background-color: #c0392b; }
+
         .status-box { margin-top: 20px; padding: 15px; background: #e8f4f8; border-left: 5px solid #3498db; border-radius: 4px; display: none; }
     </style>
 </head>
@@ -25,16 +31,16 @@
     <div class="form-group">
         <label for="pilihLoket">Pilih Loket:</label>
         <select id="pilihLoket" onchange="cekStatusLoket()">
-            <option value="Loket A / 1">Loket A / 1</option>
-            <option value="Loket B / 2">Loket B / 2</option>
-            <option value="Loket C / 3">Loket C / 3</option>
-            <option value="Loket D / 4">Loket D / 4</option>
-            <option value="Loket E / 5">Loket E / 5</option>
-            <option value="Loket F / 6">Loket F / 6</option>
-            <option value="Loket G / 7">Loket G / 7</option>
-            <option value="Loket H / 8">Loket H / 8</option>
-            <option value="Loket I / 9">Loket I / 9</option>
-            <option value="Loket J / 10">Loket J / 10</option>
+            <option value="Loket A - 1">Loket A / 1</option>
+            <option value="Loket B - 2">Loket B / 2</option>
+            <option value="Loket C - 3">Loket C / 3</option>
+            <option value="Loket D - 4">Loket D / 4</option>
+            <option value="Loket E - 5">Loket E / 5</option>
+            <option value="Loket F - 6">Loket F / 6</option>
+            <option value="Loket G - 7">Loket G / 7</option>
+            <option value="Loket H - 8">Loket H / 8</option>
+            <option value="Loket I - 9">Loket I / 9</option>
+            <option value="Loket J - 10">Loket J / 10</option>
         </select>
     </div>
 
@@ -44,41 +50,38 @@
     </div>
 
     <button onclick="updateAntreanManual()">Update Nomor Ini</button>
+    
+    <button class="btn-break" onclick="kosongkanStatusLoket()">Istirahat / Kosongkan Loket</button>
 
     <div class="status-box" id="statusBox">
         <span id="statusTeks"></span>
     </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
-    // 1. INSIALISASI STRUKTUR DATA UTAMA JIKA BELUM ADA
-    if (!localStorage.getItem('dataAntrean')) {
-        let initialData = {};
-        for(let i = 1; i <= 10; i++) {
-            let namaLoket = document.getElementById('pilihLoket').options[i-1].value;
-            initialData[namaLoket] = "-";
-        }
-        localStorage.setItem('dataAntrean', JSON.stringify(initialData));
-    }
+    const firebaseConfig = {
+        databaseURL: "https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    // PERBAIKAN UTAMA: Memastikan memori hitungan kerja admin langsung siap sedia sejak awal dibuka
-    if (!localStorage.getItem('hitunganKerjaLoket')) {
-        let initialReport = {};
-        for(let i = 1; i <= 10; i++) {
-            let namaLoket = document.getElementById('pilihLoket').options[i-1].value;
-            initialReport[namaLoket] = 0; // Mulai dari angka 0 laporan
-        }
-        localStorage.setItem('hitunganKerjaLoket', JSON.stringify(initialReport));
-    }
+    let dataLoketLokal = {};
+
+    db.ref('dataAntrean').on('value', (snapshot) => {
+        dataLoketLokal = snapshot.val() || {};
+        cekStatusLoket();
+    });
 
     function cekStatusLoket() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
-        let data = JSON.parse(localStorage.getItem('dataAntrean'));
+        let nomor = dataLoketLokal[loketTerpilih] || "-";
         let statusBox = document.getElementById('statusBox');
         let statusTeks = document.getElementById('statusTeks');
 
         statusBox.style.display = "block";
-        statusTeks.innerHTML = `<strong>${loketTerpilih}</strong> saat ini melayani Nomor: <strong>${data[loketTerpilih]}</strong>`;
+        statusTeks.innerHTML = `<strong>${loketTerpilih.replace(/-/g, '/')}</strong> saat ini melayani Nomor: <strong>${nomor}</strong>`;
     }
 
     function updateAntreanManual() {
@@ -92,42 +95,36 @@
 
         let nomorAngka = parseInt(nomorInput);
 
-        // A. UPDATE NOMOR LOKET AKTIF
-        let dataLoket = JSON.parse(localStorage.getItem('dataAntrean'));
-        dataLoket[loketTerpilih] = nomorAngka;
-        localStorage.setItem('dataAntrean', JSON.stringify(dataLoket));
+        db.ref('dataAntrean/' + loketTerpilih).set(nomorAngka);
 
-        // B. INPUT SCORE REKAP LAPORAN ADMIN (DIAMBIL SECARA AMAN)
-        let hitunganKerja = JSON.parse(localStorage.getItem('hitunganKerjaLoket'));
-        if (!hitunganKerja) {
-            hitunganKerja = {};
-        }
-        if (!hitunganKerja[loketTerpilih]) {
-            hitunganKerja[loketTerpilih] = 0;
-        }
-        
-        hitunganKerja[loketTerpilih] += 1; // Ditambah 1 rekap kerja setiap klik update sukses
-        localStorage.setItem('hitunganKerjaLoket', JSON.stringify(hitunganKerja));
+        db.ref('hitunganKerjaLoket/' + loketTerpilih).transaction((currentValue) => {
+            return (currentValue || 0) + 1;
+        });
 
-        // C. POTONG NOMOR DARI DAFTAR RUANGAN JIKA ADA
-        let dataRuangan = localStorage.getItem('nomorDalamRuangan');
-        if (dataRuangan) {
-            let listNomor = JSON.parse(dataRuangan);
+        db.ref('nomorDalamRuangan').once('value').then((snapshot) => {
+            let listNomor = snapshot.val() || [];
             let index = listNomor.indexOf(nomorAngka);
             if (index !== -1) {
                 listNomor.splice(index, 1);
-                localStorage.setItem('nomorDalamRuangan', JSON.stringify(listNomor));
+                db.ref('nomorDalamRuangan').set(listNomor);
             }
-        }
-        
-        // Kirim sinyal broadcast agar halaman admin dan monitor langsung bergeser angkanya
-        localStorage.setItem('antreanUpdated', Date.now()); 
-        
+        });
+
         document.getElementById('nomorAntrean').value = ""; 
-        cekStatusLoket();
     }
 
-    cekStatusLoket();
+    /* FUNGSI BARU: Mengubah nomor aktif kembali menjadi tanda minus (-) */
+    function kosongkanStatusLoket() {
+        let loketTerpilih = document.getElementById('pilihLoket').value;
+        
+        if (confirm(`Kosongkan status pelayanan untuk ${loketTerpilih.replace(/-/g, '/')}?`)) {
+            // Mengirimkan tanda "-" ke Firebase
+            db.ref('dataAntrean/' + loketTerpilih).set("-");
+            
+            // Mengirimkan sinyal pembaruan
+            db.ref('antreanUpdated').set(Date.now());
+        }
+    }
 </script>
 </body>
 </html>
