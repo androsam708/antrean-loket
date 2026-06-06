@@ -57,34 +57,37 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // NAMA VARIABEL SUDAH DISAMAKAN DAN DIKUNCI AGAR TIDAK SALAH PANGGIL
     let listNomorLoketGlobal = [];
 
-    // Fungsi membaca database (Meniru persis logika deteksi real-time input_ruangan)
+    // Fungsi membaca database secara real-time
     function ambilDataAntreanSesuaiRuangan() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
         
         db.ref('dataAntrean/' + loketTerpilih).on('value', (snapshot) => {
-            listNomorGlobal = snapshot.val() || [];
+            // Mengisi variabel global dengan data dari Firebase atau array kosong jika belum ada data
+            listNomorLoketGlobal = snapshot.val() || [];
             perbaruiPreviewStatus();
         });
     }
 
-    // Fungsi merender tampilan teks di bawah tombol
+    // Fungsi menampilkan status nomor terakhir di layar
     function perbaruiPreviewStatus() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
         let statusTeks = document.getElementById('statusTeks');
         let namaTampilan = loketTerpilih.replace(/_/g, ' ');
 
-        // Jika list kosong, tampilkan strip (-). Jika ada isinya, ambil nomor paling terakhir dimasukkan
-        if(listNomorGlobal.length === 0) {
+        // Jika tidak ada data antrean di loket tersebut
+        if(listNomorLoketGlobal.length === 0) {
             statusTeks.innerHTML = `<strong>${namaTampilan}</strong> saat ini melayani Nomor: <strong>-</strong>`;
         } else {
-            let nomorTerakhir = listNomorGlobal[listNomorGlobal.length - 1];
+            // Mengambil data nomor posisi paling terakhir di dalam array list
+            let nomorTerakhir = listNomorLoketGlobal[listNomorLoketGlobal.length - 1];
             statusTeks.innerHTML = `<strong>${namaTampilan}</strong> saat ini melayani Nomor: <strong>${nomorTerakhir}</strong>`;
         }
     }
 
-    // Fungsi mengirim data (Meniru persis cara tombol input_ruangan memasukkan nomor baru)
+    // Fungsi memasukkan nomor antrean baru ke dalam array list
     function tambahNomorKeLoket() {
         let nomorInput = document.getElementById('nomorAntrean').value;
 
@@ -95,20 +98,20 @@
 
         let nomorAngka = parseInt(nomorInput);
         
-        // Memasukkan nomor angka ke dalam array list (Persis algoritma input_ruangan Anda)
-        if (!listNomorGlobal.includes(nomorAngka)) {
-            listNomorGlobal.push(nomorAngka);
+        // Memasukkan nomor baru ke array jika belum terdaftar
+        if (!listNomorLoketGlobal.includes(nomorAngka)) {
+            listNomorLoketGlobal.push(nomorAngka);
         }
         
         let loketTerpilih = document.getElementById('pilihLoket').value;
         
-        // Simpan daftar array ke internet Firebase
-        db.ref('dataAntrean/' + loketTerpilih).set(listNomorGlobal);
+        // Simpan data array ke jalur Firebase loket masing-masing
+        db.ref('dataAntrean/' + loketTerpilih).set(listNomorLoketGlobal);
         
         document.getElementById('nomorAntrean').value = ""; 
     }
 
-    // Jalankan pemanggilan pertama kali saat halaman dibuka
+    // Jalankan deteksi otomatis saat halaman pertama kali dibuka
     ambilDataAntreanSesuaiRuangan();
 </script>
 </body>
