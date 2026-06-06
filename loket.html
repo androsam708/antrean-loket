@@ -19,7 +19,7 @@
         .btn-break { background-color: #e74c3c; margin-top: 10px; }
         .btn-break:hover { background-color: #c0392b; }
 
-        .status-box { margin-top: 20px; padding: 15px; background: #e8f4f8; border-left: 5px solid #3498db; border-radius: 4px; display: block; } /* Diubah ke block agar selalu siap sedia */
+        .status-box { margin-top: 20px; padding: 15px; background: #e8f4f8; border-left: 5px solid #3498db; border-radius: 4px; display: block; }
     </style>
 </head>
 <body>
@@ -30,16 +30,16 @@
     <div class="form-group">
         <label for="pilihLoket">Pilih Loket:</label>
         <select id="pilihLoket" onchange="cekStatusLoket()">
-            <option value="Loket A - 1">Loket A / 1</option>
-            <option value="Loket B - 2">Loket B / 2</option>
-            <option value="Loket C - 3">Loket C / 3</option>
-            <option value="Loket D - 4">Loket D / 4</option>
-            <option value="Loket E - 5">Loket E / 5</option>
-            <option value="Loket F - 6">Loket F / 6</option>
-            <option value="Loket G - 7">Loket G / 7</option>
-            <option value="Loket H - 8">Loket H / 8</option>
-            <option value="Loket I - 9">Loket I / 9</option>
-            <option value="Loket J - 10">Loket J / 10</option>
+            <option value="Loket A / 1">Loket A / 1</option>
+            <option value="Loket B / 2">Loket B / 2</option>
+            <option value="Loket C / 3">Loket C / 3</option>
+            <option value="Loket D / 4">Loket D / 4</option>
+            <option value="Loket E / 5">Loket E / 5</option>
+            <option value="Loket F / 6">Loket F / 6</option>
+            <option value="Loket G / 7">Loket G / 7</option>
+            <option value="Loket H / 8">Loket H / 8</option>
+            <option value="Loket I / 9">Loket I / 9</option>
+            <option value="Loket J / 10">Loket J / 10</option>
         </select>
     </div>
 
@@ -67,11 +67,9 @@
 
     let dataLoketLokal = null;
 
-    // Ambil data real-time dari Firebase dengan sistem deteksi data kosong otomatis
     db.ref('dataAntrean').on('value', (snapshot) => {
         let data = snapshot.val();
         
-        // JIKA DATABASE DI INTERNET MASIH KOSONG, BUAT BARU OTOMATIS
         if (!data) {
             let initialData = {};
             const selectElement = document.getElementById('pilihLoket');
@@ -91,14 +89,16 @@
         let loketTerpilih = document.getElementById('pilihLoket').value;
         let statusTeks = document.getElementById('statusTeks');
 
-        // Proteksi jika data internet belum selesai dimuat saat halaman dibuka pertama kali
         if (!dataLoketLokal) {
             statusTeks.innerHTML = "Memuat status antrean terbaru...";
             return;
         }
 
-        let nomor = dataLoketLokal[loketTerpilih] !== undefined ? dataLoketLokal[loketTerpilih] : "-";
-        statusTeks.innerHTML = `<strong>${loketTerpilih.replace(/-/g, '/')}</strong> saat ini melayani Nomor: <strong>${nomor}</strong>`;
+        // Konversi nama loket agar aman saat mencari data di Firebase
+        let keyFirebase = btoa(loketTerpilih).replace(/=/g, "");
+        let nomor = dataLoketLokal[keyFirebase] !== undefined ? dataLoketLokal[keyFirebase] : "-";
+        
+        statusTeks.innerHTML = `<strong>${loketTerpilih}</strong> saat ini melayani Nomor: <strong>${nomor}</strong>`;
     }
 
     function updateAntreanManual() {
@@ -111,16 +111,17 @@
         }
 
         let nomorAngka = parseInt(nomorInput);
+        let keyFirebase = btoa(loketTerpilih).replace(/=/g, "");
 
-        // Update data nomor ke internet Firebase
-        db.ref('dataAntrean/' + loketTerpilih).set(nomorAngka);
+        // A. Update nomor ke Firebase
+        db.ref('dataAntrean/' + keyFirebase).set(nomorAngka);
 
-        // Tambah poin laporan performa admin
-        db.ref('hitunganKerjaLoket/' + loketTerpilih).transaction((currentValue) => {
+        // B. Tambah poin laporan admin
+        db.ref('hitunganKerjaLoket/' + keyFirebase).transaction((currentValue) => {
             return (currentValue || 0) + 1;
         });
 
-        // Potong nomor dari daftar ruangan jika terdaftar
+        // C. Potong dari daftar ruangan
         db.ref('nomorDalamRuangan').once('value').then((snapshot) => {
             let listNomor = snapshot.val() || [];
             let index = listNomor.indexOf(nomorAngka);
@@ -135,8 +136,10 @@
 
     function kosongkanStatusLoket() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
-        if (confirm(`Kosongkan status pelayanan untuk ${loketTerpilih.replace(/-/g, '/')}?`)) {
-            db.ref('dataAntrean/' + loketTerpilih).set("-");
+        let keyFirebase = btoa(loketTerpilih).replace(/=/g, "");
+        
+        if (confirm(`Kosongkan status pelayanan untuk ${loketTerpilih}?`)) {
+            db.ref('dataAntrean/' + keyFirebase).set("-");
         }
     }
 </script>
