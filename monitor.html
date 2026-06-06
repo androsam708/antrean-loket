@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Tampilan Antrean Utama</title>
+    <style>
+        /* PENGATURAN WARNA BACKGROUND UTAMA MENJADI TERANG */
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background-color: #f4f6f9; 
+            color: #2c3e50; 
+            margin: 0; 
+            padding: 20px; 
+            box-sizing: border-box;
+        }
+        
+        h1 { 
+            text-align: center; 
+            color: #2c3e50; 
+            margin-bottom: 25px; 
+            font-size: 2.5em; 
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+        
+        /* GAYA BLOK 10 LOKET */
+        .grid-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+            gap: 20px; 
+            max-width: 1600px; 
+            margin: 0 auto 35px auto; 
+        }
+        
+        .loket-card { 
+            background: #ffffff; 
+            border-radius: 14px; 
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08); 
+            text-align: center; 
+            padding: 20px; 
+            border: 2px solid #e2e8f0;
+            border-bottom: 8px solid #3498db; 
+        }
+        
+        /* TULISAN NAMA LOKET: DIPERBESAR & DIPERTEBAL MAKSIMAL */
+        .nama-loket { 
+            font-size: 2em;            /* Ukuran diperbesar drastis */
+            font-weight: 900;          /* Dibuat sangat tebal */
+            color: #1a365d;            /* Warna Biru Tua Gelap yang sangat kontras */
+            margin-bottom: 10px; 
+            background: #ebf8ff; 
+            padding: 10px; 
+            border-radius: 8px; 
+            letter-spacing: 1px;
+        }
+        
+        /* TULISAN NOMOR YANG TERLAYANI: DIPERBESAR DAN TEBAL */
+        .nomor-antrean { 
+            font-size: 4.5em;          /* Ukuran angka diperbesar maksimal */
+            font-weight: 800;          /* Angka dipertebal */
+            margin: 5px 0; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+        }
+        
+        .label-terlayani { 
+            font-size: 0.9em; 
+            color: #718096; 
+            text-transform: uppercase; 
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        /* GAYA BARU: BLOK INFORMASI RUANGAN (KONTRAS TINGGI) */
+        .ruangan-container { 
+            max-width: 1600px; 
+            margin: 0 auto; 
+            background: #ffffff; 
+            padding: 25px; 
+            border-radius: 14px; 
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08); 
+            border: 2px solid #e2e8f0;
+            border-left: 10px solid #28a745; 
+        }
+        
+        .ruangan-title { 
+            font-size: 1.6em; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            margin-bottom: 15px; 
+            color: #212529; 
+            letter-spacing: 1px;
+        }
+        
+        /* ANGKA DI DALAM RUANGAN: HITAM PEKAT, SANGAT JELAS */
+        .ruangan-content { 
+            font-size: 2.2em; 
+            line-height: 1.5; 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 8px; 
+            border: 1px solid #e2e8f0; 
+            min-height: 60px; 
+            word-break: break-all; 
+            color: #000000;           /* Warna hitam pekat agar tajam di luar ruangan */
+            font-weight: 800; 
+        }
+        
+        footer { text-align: center; margin-top: 5px; color: #a0aec0; font-size: 0.95em; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+    <h1>Tampilan Monitor Utama</h1>
+    
+    <div class="grid-container" id="monitorGrid"></div>
+
+    <div class="ruangan-container">
+        <div class="ruangan-title">Nomor Antrean yang Masuk / Berada di Dalam Ruangan:</div>
+        <div class="ruangan-content" id="ruanganList">-</div>
+    </div>
+
+    <footer style="margin-top: 30px;">Sistem Informasi Antrean Loket Digital Terintegrasi</footer>
+
+<script>
+    function renderLoket() {
+        let grid = document.getElementById('monitorGrid');
+        let data = JSON.parse(localStorage.getItem('dataAntrean'));
+        
+        if(!data) {
+            grid.innerHTML = "<p style='text-align:center; width:100%; font-weight:bold;'>Menunggu data loket...</p>";
+            return;
+        }
+
+        grid.innerHTML = ""; 
+        for (const [loket, nomor] of Object.entries(data)) {
+            let card = document.createElement('div');
+            card.className = 'loket-card';
+            
+            // Pengaturan warna angka: Hijau tua solid untuk angka, Merah tua solid untuk tanda minus (-)
+            let warnaNomor = (nomor === "-") ? "#c53030" : "#22543d";
+
+            card.innerHTML = `
+                <div class="nama-loket">${loket}</div>
+                <div class="label-terlayani">Sedang Dilayani</div>
+                <div class="nomor-antrean" style="color: ${warnaNomor}">${nomor}</div>
+            `;
+            grid.appendChild(card);
+        }
+    }
+
+    function renderRuangan() {
+        let ruanganBox = document.getElementById('ruanganList');
+        let dataRuangan = localStorage.getItem('nomorDalamRuangan');
+        
+        if (!dataRuangan || JSON.parse(dataRuangan).length === 0) {
+            ruanganBox.innerHTML = "<span style='color:#a0aec0; font-style: italic; font-size:0.7em; font-weight:normal;'>Belum ada nomor yang dipanggil masuk ruangan</span>";
+            return;
+        }
+
+        let nomorUrut = JSON.parse(dataRuangan);
+        ruanganBox.innerText = nomorUrut.join(', ');
+    }
+
+    // Jalankan render awal
+    renderLoket();
+    renderRuangan();
+
+    // Deteksi otomatis sinkronisasi antar-tab
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'antreanUpdated' || e.key === 'dataAntrean' || e.key === 'nomorDalamRuangan') {
+            renderLoket();
+            renderRuangan();
+        }
+    });
+</script>
+</body>
+</html>
