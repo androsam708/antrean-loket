@@ -25,16 +25,16 @@
     <div class="form-group">
         <label for="pilihLoket">Pilih Loket:</label>
         <select id="pilihLoket" onchange="cekStatusLoket()">
-            <option value="Loket A - 1">Loket A / 1</option>
-            <option value="Loket B - 2">Loket B / 2</option>
-            <option value="Loket C - 3">Loket C / 3</option>
-            <option value="Loket D - 4">Loket D / 4</option>
-            <option value="Loket E - 5">Loket E / 5</option>
-            <option value="Loket F - 6">Loket F / 6</option>
-            <option value="Loket G - 7">Loket G / 7</option>
-            <option value="Loket H - 8">Loket H / 8</option>
-            <option value="Loket I - 9">Loket I / 9</option>
-            <option value="Loket J - 10">Loket J / 10</option>
+            <option value="Loket_A_1">Loket A / 1</option>
+            <option value="Loket_B_2">Loket B / 2</option>
+            <option value="Loket_C_3">Loket C / 3</option>
+            <option value="Loket D_4">Loket D / 4</option>
+            <option value="Loket_E_5">Loket E / 5</option>
+            <option value="Loket_F_6">Loket F / 6</option>
+            <option value="Loket_G_7">Loket G / 7</option>
+            <option value="Loket_H_8">Loket H / 8</option>
+            <option value="Loket_I_9">Loket I / 9</option>
+            <option value="Loket_J_10">Loket J / 10</option>
         </select>
     </div>
 
@@ -67,10 +67,15 @@
     function cekStatusLoket() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
         let nomor = "-";
+        
         if (dataLoketLokal && dataLoketLokal[loketTerpilih] !== undefined) {
             nomor = dataLoketLokal[loketTerpilih];
         }
-        document.getElementById('statusTeks').innerHTML = `<strong>${loketTerpilih.replace(/-/g, '/')}</strong> saat ini melayani Nomor: <strong>${nomor}</strong>`;
+        
+        // Mengubah format "Loket_G_7" menjadi "Loket G / 7" saat ditampilkan di layar
+        let namaTampilan = loketTerpilih.replace(/_/g, " ").replace(" A ", " A / ").replace(" B ", " B / ").replace(" C ", " C / ").replace(" D ", " D / ").replace(" E ", " E / ").replace(" F ", " F / ").replace(" G ", " G / ").replace(" H ", " H / ").replace(" I ", " I / ").replace(" J ", " J / ");
+        
+        document.getElementById('statusTeks').innerHTML = `<strong>${namaTampilan}</strong> saat ini melayani Nomor: <strong>${nomor}</strong>`;
     }
 
     function updateAntreanManual() {
@@ -83,6 +88,8 @@
         }
 
         let nomorAngka = parseInt(nomorInput);
+        
+        // Mengirim data ke Firebase menggunakan nama jalur tanpa spasi
         db.ref('dataAntrean/' + loketTerpilih).set(nomorAngka);
 
         db.ref('hitunganKerjaLoket/' + loketTerpilih).transaction((currentValue) => {
