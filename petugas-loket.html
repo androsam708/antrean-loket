@@ -3,58 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Operator Loket</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Sistem Antrean - Panel Loket</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 500px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        select, input, button { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        select:focus, input:focus { border-color: #3498db; outline: none; }
+        button { background-color: #3498db; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.3s; margin-top: 10px; }
+        button:hover { background-color: #2980b9; }
+        .status-box { margin-top: 20px; padding: 15px; background: #e8f4f8; border-left: 5px solid #3498db; border-radius: 4px; display: block; }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col justify-between">
+<body>
 
-    <!-- Top Navigation -->
-    <header class="bg-white border-b border-slate-200 p-4">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <!-- Pilihan Loket -->
-            <select id="select_loket" class="border-none text-lg font-bold text-slate-900 bg-transparent focus:outline-none cursor-pointer">
-                <option value="A">LOKET A / LOKET 1</option>
-                <option value="B">LOKET B / LOKET 2</option>
-                <option value="C">LOKET C / LOKET 3</option>
-                <!-- dst sampai 10 -->
-            </select>
-            <span class="flex items-center gap-2 text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-medium">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Terhubung
-            </span>
-        </div>
-    </header>
+<div class="container">
+    <h2>Panggil Antrean (Panel Loket)</h2>
+    
+    <div class="form-group">
+        <label for="pilihLoket">Pilih Loket:</label>
+        <select id="pilihLoket" onchange="cekStatusLoket()">
+            <option value="Loket A - 1">Loket A / 1</option>
+            <option value="Loket B - 2">Loket B / 2</option>
+            <option value="Loket C - 3">Loket C / 3</option>
+            <option value="Loket D - 4">Loket D / 4</option>
+            <option value="Loket E - 5">Loket E / 5</option>
+            <option value="Loket F - 6">Loket F / 6</option>
+            <option value="Loket G - 7">Loket G / 7</option>
+            <option value="Loket H - 8">Loket H / 8</option>
+            <option value="Loket I - 9">Loket I / 9</option>
+            <option value="Loket J - 10">Loket J / 10</option>
+        </select>
+    </div>
 
-    <!-- Main Workspace -->
-    <main class="max-w-md mx-auto w-full p-4 my-auto">
-        <div class="bg-white rounded-3xl p-8 shadow-md border border-slate-100 text-center space-y-6">
-            
-            <div>
-                <span class="text-xs uppercase tracking-widest text-slate-400 font-bold block mb-1">Sedang Dilayani</span>
-                <div class="text-8xl font-black text-slate-900 tracking-tight" id="nomor_sekarang">024</div>
-            </div>
+    <div class="form-group">
+        <label for="nomorAntrean">Input Nomor Antrean:</label>
+        <input type="number" id="nomorAntrean" placeholder="Contoh: 105" min="1">
+    </div>
 
-            <!-- Tombol Aksi Utama -->
-            <div class="space-y-3 pt-4">
-                <button onclick="panggilBerikutnya()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 transition text-lg tracking-wide">
-                    PANGGIL BERIKUTNYA
-                </button>
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="panggilUlang()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl transition border border-slate-200/60 text-sm">
-                        🔄 Panggil Ulang
-                    </button>
-                    <button onclick="tandaiTerlewat()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold py-3 rounded-xl transition border border-rose-100 text-sm">
-                        ❌ Lewati Nomor
-                    </button>
-                </div>
-            </div>
+    <button onclick="updateAntreanManual()">Update Nomor Ini</button>
 
-        </div>
-    </main>
+    <div class="status-box" id="statusBox">
+        <span id="statusTeks">Memuat status antrean...</span>
+    </div>
+</div>
 
-    <!-- Info Singkat di Bawah -->
-    <footer class="p-4 text-center text-xs text-slate-400">
-        ID Operator: #OP-1002 | Pastikan volume speaker aktif saat memanggil.
-    </footer>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    const firebaseConfig = { databaseURL: "https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let dataLoketLokal = {};
+
+    db.ref('dataAntrean').on('value', (snapshot) => {
+        dataLoketLokal = snapshot.val() || {};
+        cekStatusLoket();
+    });
+
+    function cekStatusLoket() {
+        let loketTerpilih = document.getElementById('pilihLoket').value;
+        let nomor = "-";
+        if (dataLoketLokal && dataLoketLokal[loketTerpilih] !== undefined) {
+            nomor = dataLoketLokal[loketTerpilih];
+        }
+        document.getElementById('statusTeks').innerHTML = `<strong>${loketTerpilih.replace(/-/g, '/')}</strong> saat ini melayani Nomor: <strong>${nomor}</strong>`;
+    }
+
+    function updateAntreanManual() {
+        let loketTerpilih = document.getElementById('pilihLoket').value;
+        let nomorInput = document.getElementById('nomorAntrean').value;
+
+        if (nomorInput === "" || nomorInput < 1) {
+            alert("Silakan masukkan nomor antrean yang valid!");
+            return;
+        }
+
+        let nomorAngka = parseInt(nomorInput);
+        db.ref('dataAntrean/' + loketTerpilih).set(nomorAngka);
+
+        db.ref('hitunganKerjaLoket/' + loketTerpilih).transaction((currentValue) => {
+            return (currentValue || 0) + 1;
+        });
+
+        db.ref('nomorDalamRuangan').once('value').then((snapshot) => {
+            let listNomor = snapshot.val() || [];
+            let index = listNomor.indexOf(nomorAngka);
+            if (index !== -1) {
+                listNomor.splice(index, 1);
+                db.ref('nomorDalamRuangan').set(listNomor);
+            }
+        });
+
+        document.getElementById('nomorAntrean').value = ""; 
+    }
+</script>
 </body>
 </html>
