@@ -46,27 +46,38 @@
     <button onclick="updateAntreanManual()">Update Nomor Ini</button>
 
     <div class="status-box" id="statusBox">
-        <span id="statusTeks">Memuat status antrean...</span>
+        <span id="statusTeks">Menghubungkan ke database...</span>
     </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
-    // Konfigurasi database Firebase resmi milik Anda
     const firebaseConfig = { databaseURL: "https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let dataLoketLokal = {};
 
-    // Memantau perubahan data secara real-time dari Firebase
+    // SCRIPT PEMBERSIH OTOMATIS: Memaksa database Firebase agar bersih dari data eror yang lama
+    const listSemuaLoket = ["Loket A - 1", "Loket B - 2", "Loket C - 3", "Loket D - 4", "Loket E - 5", "Loket F - 6", "Loket G - 7", "Loket H - 8", "Loket I - 9", "Loket J - 10"];
+    
+    // Ambil data dari internet secara real-time
     db.ref('dataAntrean').on('value', (snapshot) => {
-        dataLoketLokal = snapshot.val() || {};
-        cekStatusLoket(); // Langsung perbarui tampilan layar begitu ada data masuk
+        let data = snapshot.val();
+        
+        // Jika data kosong atau strukturnya rusak, reset ulang formatnya secara otomatis
+        if (!data || typeof data !== 'object') {
+            let resetData = {};
+            listSemuaLoket.forEach(l => { resetData[l] = "-"; });
+            db.ref('dataAntrean').set(resetData);
+            dataLoketLokal = resetData;
+        } else {
+            dataLoketLokal = data;
+        }
+        cekStatusLoket();
     });
 
-    // Fungsi untuk menampilkan status nomor di bawah tombol
     function cekStatusLoket() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
         let nomor = "-";
@@ -75,13 +86,10 @@
             nomor = dataLoketLokal[loketTerpilih];
         }
         
-        // Mengubah tampilan visual "Loket A - 1" menjadi "Loket A / 1" agar rapi di layar
         let namaTampilan = loketTerpilih.replace(/-/g, '/');
-        
         document.getElementById('statusTeks').innerHTML = `<strong>${namaTampilan}</strong> saat ini melayani Nomor: <strong>${nomor}</strong>`;
     }
 
-    // Fungsi utama untuk mengirim inputan nomor ke Firebase
     function updateAntreanManual() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
         let nomorInput = document.getElementById('nomorAntrean').value;
@@ -93,25 +101,9 @@
 
         let nomorAngka = parseInt(nomorInput);
         
-        // 1. Kirim nomor baru ke jalur dataAntrean/Loket X - X
+        // Kirim angka ke Firebase
         db.ref('dataAntrean/' + loketTerpilih).set(nomorAngka);
 
-        // 2. Tambah hitungan performa kerja loket untuk laporan admin
-        db.ref('hitunganKerjaLoket/' + loketTerpilih).transaction((currentValue) => {
-            return (currentValue || 0) + 1;
-        });
-
-        // 3. Hapus nomor dari daftar "nomorDalamRuangan" secara otomatis jika nomor tersebut dipanggil kembali oleh loket
-        db.ref('nomorDalamRuangan').once('value').then((snapshot) => {
-            let listNomor = snapshot.val() || [];
-            let index = listNomor.indexOf(nomorAngka);
-            if (index !== -1) {
-                listNomor.splice(index, 1);
-                db.ref('nomorDalamRuangan').set(listNomor);
-            }
-        });
-
-        // Kosongkan kotak input setelah tombol diklik agar siap menerima input berikutnya
         document.getElementById('nomorAntrean').value = ""; 
     }
 </script>
