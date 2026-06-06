@@ -63,7 +63,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
     const firebaseConfig = { databaseURL: "https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/" };
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const listNamaLoket = [
@@ -71,7 +71,6 @@
         "Loket F - 6", "Loket G - 7", "Loket H - 8", "Loket I - 9", "Loket J - 10"
     ];
 
-    // Baca gabungan data secara real-time
     db.ref().on('value', (snapshot) => {
         let master = snapshot.val() || {};
         let dataLoket = master.dataAntrean || {};
@@ -86,7 +85,7 @@
         tbody.innerHTML = "";
 
         listNamaLoket.forEach(loket => {
-            let nomorAktif = dataLoket[loket] || "-";
+            let nomorAktif = dataLoket[loket] !== undefined ? dataLoket[loket] : "-";
             let skorLoket = hitunganKerja[loket] || 0;
             totalPanggilanGabungan += skorLoket;
 
