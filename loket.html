@@ -59,22 +59,9 @@
 
     let dataLoketLokal = {};
 
-    // SCRIPT PEMBERSIH OTOMATIS: Memaksa database Firebase agar bersih dari data eror yang lama
-    const listSemuaLoket = ["Loket A - 1", "Loket B - 2", "Loket C - 3", "Loket D - 4", "Loket E - 5", "Loket F - 6", "Loket G - 7", "Loket H - 8", "Loket I - 9", "Loket J - 10"];
-    
-    // Ambil data dari internet secara real-time
+    // Menangkap data dari Firebase secara real-time
     db.ref('dataAntrean').on('value', (snapshot) => {
-        let data = snapshot.val();
-        
-        // Jika data kosong atau strukturnya rusak, reset ulang formatnya secara otomatis
-        if (!data || typeof data !== 'object') {
-            let resetData = {};
-            listSemuaLoket.forEach(l => { resetData[l] = "-"; });
-            db.ref('dataAntrean').set(resetData);
-            dataLoketLokal = resetData;
-        } else {
-            dataLoketLokal = data;
-        }
+        dataLoketLokal = snapshot.val() || {};
         cekStatusLoket();
     });
 
@@ -99,11 +86,13 @@
             return;
         }
 
-        let nomorAngka = parseInt(nomorInput);
+        // TUNTAS: Mengirimkan data sebagai STRING/TEKS murni (bukan angka/integer) agar cocok dengan database utama Anda
+        let nomorTeks = String(nomorInput);
         
-        // Kirim angka ke Firebase
-        db.ref('dataAntrean/' + loketTerpilih).set(nomorAngka);
+        // Kirim langsung ke Firebase jalur dataAntrean
+        db.ref('dataAntrean/' + loketTerpilih).set(nomorTeks);
 
+        // Kosongkan kolom input agar siap dipakai kembali
         document.getElementById('nomorAntrean').value = ""; 
     }
 </script>
