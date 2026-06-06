@@ -19,7 +19,7 @@
         .btn-break { background-color: #e74c3c; margin-top: 10px; }
         .btn-break:hover { background-color: #c0392b; }
 
-        .status-box { margin-top: 20px; padding: 15px; background: #e8f4f8; border-left: 5px solid #3498db; border-radius: 4px; display: none; }
+        .status-box { margin-top: 20px; padding: 15px; background: #e8f4f8; border-left: 5px solid #3498db; border-radius: 4px; display: block; } /* Diubah ke block agar selalu siap sedia */
     </style>
 </head>
 <body>
@@ -52,7 +52,7 @@
     <button class="btn-break" onclick="kosongkanStatusLoket()">Istirahat / Kosongkan Loket</button>
 
     <div class="status-box" id="statusBox">
-        <span id="statusTeks"></span>
+        <span id="statusTeks">Menghubungkan ke database...</span>
     </div>
 </div>
 
@@ -65,22 +65,39 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let dataLoketLokal = {};
+    let dataLoketLokal = null;
 
-    // Mengambil data terpusat dari Firebase
+    // Ambil data real-time dari Firebase dengan sistem deteksi data kosong otomatis
     db.ref('dataAntrean').on('value', (snapshot) => {
-        dataLoketLokal = snapshot.val() || {};
-        cekStatusLoket(); // Otomatis refresh tulisan di bawah saat ada perubahan
+        let data = snapshot.val();
+        
+        // JIKA DATABASE DI INTERNET MASIH KOSONG, BUAT BARU OTOMATIS
+        if (!data) {
+            let initialData = {};
+            const selectElement = document.getElementById('pilihLoket');
+            for(let i = 0; i < selectElement.options.length; i++) {
+                initialData[selectElement.options[i].value] = "-";
+            }
+            db.ref('dataAntrean').set(initialData);
+            dataLoketLokal = initialData;
+        } else {
+            dataLoketLokal = data;
+        }
+        
+        cekStatusLoket();
     });
 
     function cekStatusLoket() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
-        let nomor = dataLoketLokal[loketTerpilih] !== undefined ? dataLoketLokal[loketTerpilih] : "-";
-        
-        let statusBox = document.getElementById('statusBox');
         let statusTeks = document.getElementById('statusTeks');
 
-        statusBox.style.display = "block";
+        // Proteksi jika data internet belum selesai dimuat saat halaman dibuka pertama kali
+        if (!dataLoketLokal) {
+            statusTeks.innerHTML = "Memuat status antrean terbaru...";
+            return;
+        }
+
+        let nomor = dataLoketLokal[loketTerpilih] !== undefined ? dataLoketLokal[loketTerpilih] : "-";
         statusTeks.innerHTML = `<strong>${loketTerpilih.replace(/-/g, '/')}</strong> saat ini melayani Nomor: <strong>${nomor}</strong>`;
     }
 
@@ -95,18 +112,15 @@
 
         let nomorAngka = parseInt(nomorInput);
 
-        // Kirim data nomor ke database
-        db.ref('dataAntrean/' + loketTerpilih).set(nomorAngka).then(() => {
-            // Setelah sukses terkirim, pastikan tampilan lokal ikut terupdate
-            cekStatusLoket();
-        });
+        // Update data nomor ke internet Firebase
+        db.ref('dataAntrean/' + loketTerpilih).set(nomorAngka);
 
-        // Tambah poin rekap kerja admin
+        // Tambah poin laporan performa admin
         db.ref('hitunganKerjaLoket/' + loketTerpilih).transaction((currentValue) => {
             return (currentValue || 0) + 1;
         });
 
-        // Potong dari daftar ruangan
+        // Potong nomor dari daftar ruangan jika terdaftar
         db.ref('nomorDalamRuangan').once('value').then((snapshot) => {
             let listNomor = snapshot.val() || [];
             let index = listNomor.indexOf(nomorAngka);
@@ -121,11 +135,8 @@
 
     function kosongkanStatusLoket() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
-        
         if (confirm(`Kosongkan status pelayanan untuk ${loketTerpilih.replace(/-/g, '/')}?`)) {
-            db.ref('dataAntrean/' + loketTerpilih).set("-").then(() => {
-                cekStatusLoket();
-            });
+            db.ref('dataAntrean/' + loketTerpilih).set("-");
         }
     }
 </script>
