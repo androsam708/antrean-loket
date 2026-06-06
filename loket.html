@@ -24,7 +24,7 @@
     
     <div class="form-group">
         <label for="pilihLoket">Pilih Loket:</label>
-        <select id="pilihLoket" onchange="ambilDataAntreanSesuaiRuangan()">
+        <select id="pilihLoket" onchange="bacaDataFirebase()">
             <option value="Loket_A_1">Loket A / 1</option>
             <option value="Loket_B_2">Loket B / 2</option>
             <option value="Loket_C_3">Loket C / 3</option>
@@ -43,7 +43,7 @@
         <input type="number" id="nomorAntrean" placeholder="Contoh: 102" min="1">
     </div>
 
-    <button onclick="tambahNomorKeLoket()">Update Nomor Ini</button>
+    <button onclick="kirimNomorKeFirebase()">Update Nomor Ini</button>
 
     <div class="status-box" id="statusBox">
         <span id="statusTeks">Menghubungkan ke database...</span>
@@ -53,42 +53,31 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
+    // Koneksi resmi ke database Firebase Anda
     const firebaseConfig = { databaseURL: "https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // NAMA VARIABEL SUDAH DISAMAKAN DAN DIKUNCI AGAR TIDAK SALAH PANGGIL
-    let listNomorLoketGlobal = [];
-
-    // Fungsi membaca database secara real-time
-    function ambilDataAntreanSesuaiRuangan() {
+    // Fungsi membaca data nomor tunggal dari Firebase (Sangat simpel & anti-gagal)
+    function bacaDataFirebase() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
-        
+        let namaTampilan = loketTerpilih.replace(/_/g, ' ');
+
         db.ref('dataAntrean/' + loketTerpilih).on('value', (snapshot) => {
-            // Mengisi variabel global dengan data dari Firebase atau array kosong jika belum ada data
-            listNomorLoketGlobal = snapshot.val() || [];
-            perbaruiPreviewStatus();
+            let nomorAktif = snapshot.val();
+            
+            // Jika di database belum ada datanya, tampilkan strip (-)
+            if (nomorAktif === null) {
+                nomorAktif = "-";
+            }
+            
+            document.getElementById('statusTeks').innerHTML = `<strong>${namaTampilan}</strong> saat ini melayani Nomor: <strong>${nomorAktif}</strong>`;
         });
     }
 
-    // Fungsi menampilkan status nomor terakhir di layar
-    function perbaruiPreviewStatus() {
+    // Fungsi mengirim data nomor tunggal ke Firebase saat tombol diklik
+    function kirimNomorKeFirebase() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
-        let statusTeks = document.getElementById('statusTeks');
-        let namaTampilan = loketTerpilih.replace(/_/g, ' ');
-
-        // Jika tidak ada data antrean di loket tersebut
-        if(listNomorLoketGlobal.length === 0) {
-            statusTeks.innerHTML = `<strong>${namaTampilan}</strong> saat ini melayani Nomor: <strong>-</strong>`;
-        } else {
-            // Mengambil data nomor posisi paling terakhir di dalam array list
-            let nomorTerakhir = listNomorLoketGlobal[listNomorLoketGlobal.length - 1];
-            statusTeks.innerHTML = `<strong>${namaTampilan}</strong> saat ini melayani Nomor: <strong>${nomorTerakhir}</strong>`;
-        }
-    }
-
-    // Fungsi memasukkan nomor antrean baru ke dalam array list
-    function tambahNomorKeLoket() {
         let nomorInput = document.getElementById('nomorAntrean').value;
 
         if (nomorInput === "" || parseInt(nomorInput) < 1) {
@@ -96,23 +85,15 @@
             return;
         }
 
-        let nomorAngka = parseInt(nomorInput);
+        // Kirim langsung berupa teks biasa agar langsung merespons di Firebase
+        db.ref('dataAntrean/' + loketTerpilih).set(nomorInput);
         
-        // Memasukkan nomor baru ke array jika belum terdaftar
-        if (!listNomorLoketGlobal.includes(nomorAngka)) {
-            listNomorLoketGlobal.push(nomorAngka);
-        }
-        
-        let loketTerpilih = document.getElementById('pilihLoket').value;
-        
-        // Simpan data array ke jalur Firebase loket masing-masing
-        db.ref('dataAntrean/' + loketTerpilih).set(listNomorLoketGlobal);
-        
+        // Kosongkan kotak input kembali bersih
         document.getElementById('nomorAntrean').value = ""; 
     }
 
-    // Jalankan deteksi otomatis saat halaman pertama kali dibuka
-    ambilDataAntreanSesuaiRuangan();
+    // Jalankan pemanggilan pertama kali otomatis saat halaman dibuka
+    bacaDataFirebase();
 </script>
 </body>
 </html>
