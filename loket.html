@@ -30,16 +30,16 @@
     <div class="form-group">
         <label for="pilihLoket">Pilih Loket:</label>
         <select id="pilihLoket" onchange="cekStatusLoket()">
-            <option value="Loket A / 1">Loket A / 1</option>
-            <option value="Loket B / 2">Loket B / 2</option>
-            <option value="Loket C / 3">Loket C / 3</option>
-            <option value="Loket D / 4">Loket D / 4</option>
-            <option value="Loket E / 5">Loket E / 5</option>
-            <option value="Loket F / 6">Loket F / 6</option>
-            <option value="Loket G / 7">Loket G / 7</option>
-            <option value="Loket H / 8">Loket H / 8</option>
-            <option value="Loket I / 9">Loket I / 9</option>
-            <option value="Loket J / 10">Loket J / 10</option>
+            <option value="Loket_A_1">Loket A / 1</option>
+            <option value="Loket_B_2">Loket B / 2</option>
+            <option value="Loket_C_3">Loket C / 3</option>
+            <option value="Loket_D_4">Loket D / 4</option>
+            <option value="Loket_E_5">Loket E / 5</option>
+            <option value="Loket_F_6">Loket F / 6</option>
+            <option value="Loket_G_7">Loket G / 7</option>
+            <option value="Loket_H_8">Loket H / 8</option>
+            <option value="Loket_I_9">Loket I / 9</option>
+            <option value="Loket_J_10">Loket J / 10</option>
         </select>
     </div>
 
@@ -56,49 +56,41 @@
     </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-database.js"></script>
+
 <script>
     const firebaseConfig = {
         databaseURL: "https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/"
     };
-    firebase.initializeApp(firebaseConfig);
+    
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.database();
 
     let dataLoketLokal = null;
 
+    // Sinkronisasi data real-time
     db.ref('dataAntrean').on('value', (snapshot) => {
-        let data = snapshot.val();
-        
-        if (!data) {
-            let initialData = {};
-            const selectElement = document.getElementById('pilihLoket');
-            for(let i = 0; i < selectElement.options.length; i++) {
-                initialData[selectElement.options[i].value] = "-";
-            }
-            db.ref('dataAntrean').set(initialData);
-            dataLoketLokal = initialData;
-        } else {
-            dataLoketLokal = data;
-        }
-        
+        dataLoketLokal = snapshot.val() || {};
         cekStatusLoket();
     });
 
     function cekStatusLoket() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
         let statusTeks = document.getElementById('statusTeks');
+        
+        // Mengubah tampilan id database agar di layar tetap muncul tanda " / " yang rapi
+        let namaTampilan = loketTerpilih.replace(/_/g, " ").replace(" A ", " A / ").replace(" B ", " B / ").replace(" C ", " C / ").replace(" D ", " D / ").replace(" E ", " E / ").replace(" F ", " F / ").replace(" G ", " G / ").replace(" H ", " H / ").replace(" I ", " I / ").replace(" J ", " J / ");
 
         if (!dataLoketLokal) {
-            statusTeks.innerHTML = "Memuat status antrean terbaru...";
+            statusTeks.innerHTML = "Memuat status antrean...";
             return;
         }
 
-        // Konversi nama loket agar aman saat mencari data di Firebase
-        let keyFirebase = btoa(loketTerpilih).replace(/=/g, "");
-        let nomor = dataLoketLokal[keyFirebase] !== undefined ? dataLoketLokal[keyFirebase] : "-";
-        
-        statusTeks.innerHTML = `<strong>${loketTerpilih}</strong> saat ini melayani Nomor: <strong>${nomor}</strong>`;
+        let nomor = dataLoketLokal[loketTerpilih] !== undefined ? dataLoketLokal[loketTerpilih] : "-";
+        statusTeks.innerHTML = `<strong>${namaTampilan}</strong> saat ini melayani Nomor: <strong>${nomor}</strong>`;
     }
 
     function updateAntreanManual() {
@@ -111,17 +103,16 @@
         }
 
         let nomorAngka = parseInt(nomorInput);
-        let keyFirebase = btoa(loketTerpilih).replace(/=/g, "");
 
-        // A. Update nomor ke Firebase
-        db.ref('dataAntrean/' + keyFirebase).set(nomorAngka);
+        // Update langsung ke database Firebase
+        db.ref('dataAntrean/' + loketTerpilih).set(nomorAngka);
 
-        // B. Tambah poin laporan admin
-        db.ref('hitunganKerjaLoket/' + keyFirebase).transaction((currentValue) => {
+        // Catat statistik kerja loket untuk admin
+        db.ref('hitunganKerjaLoket/' + loketTerpilih).transaction((currentValue) => {
             return (currentValue || 0) + 1;
         });
 
-        // C. Potong dari daftar ruangan
+        // Hapus dari daftar nomor antrean dalam ruangan jika ada
         db.ref('nomorDalamRuangan').once('value').then((snapshot) => {
             let listNomor = snapshot.val() || [];
             let index = listNomor.indexOf(nomorAngka);
@@ -136,10 +127,10 @@
 
     function kosongkanStatusLoket() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
-        let keyFirebase = btoa(loketTerpilih).replace(/=/g, "");
         
-        if (confirm(`Kosongkan status pelayanan untuk ${loketTerpilih}?`)) {
-            db.ref('dataAntrean/' + keyFirebase).set("-");
+        if (confirm(`Kosongkan status pelayanan untuk loket ini?`)) {
+            // Set kembali menjadi strip (-) saat istirahat/pulang
+            db.ref('dataAntrean/' + loketTerpilih).set("-");
         }
     }
 </script>
