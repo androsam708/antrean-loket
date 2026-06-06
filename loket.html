@@ -14,7 +14,7 @@
         select:focus, input:focus { border-color: #3498db; outline: none; }
         button { background-color: #3498db; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.3s; margin-top: 10px; }
         button:hover { background-color: #2980b9; }
-        .status-box { margin-top: 20px; padding: 15px; background: #e8f4f8; border-left: 5px solid #3498db; border-radius: 4px; display: none; }
+        .status-box { margin-top: 20px; padding: 15px; background: #e8f4f8; border-left: 5px solid #3498db; border-radius: 4px; display: block; }
     </style>
 </head>
 <body>
@@ -46,23 +46,25 @@
     <button onclick="updateAntreanManual()">Update Nomor Ini</button>
 
     <div class="status-box" id="statusBox">
-        <span id="statusTeks"></span>
+        <span id="statusTeks">Menghubungkan ke database...</span>
     </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-database.js"></script>
 <script>
-    // Konfigurasi Database Online Sandbox
     const firebaseConfig = {
         databaseURL: "https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/"
     };
-    firebase.initializeApp(firebaseConfig);
+    
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.database();
 
     let dataLoketLokal = {};
 
-    // Ambil data real-time dari server internet
+    // Mengambil data terpusat secara online dan real-time
     db.ref('dataAntrean').on('value', (snapshot) => {
         dataLoketLokal = snapshot.val() || {};
         cekStatusLoket();
@@ -70,11 +72,9 @@
 
     function cekStatusLoket() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
-        let nomor = dataLoketLokal[loketTerpilih] || "-";
-        let statusBox = document.getElementById('statusBox');
+        let nomor = dataLoketLokal[loketTerpilih] !== undefined ? dataLoketLokal[loketTerpilih] : "-";
         let statusTeks = document.getElementById('statusTeks');
 
-        statusBox.style.display = "block";
         statusTeks.innerHTML = `<strong>${loketTerpilih.replace(/-/g, '/')}</strong> saat ini melayani Nomor: <strong>${nomor}</strong>`;
     }
 
@@ -89,15 +89,15 @@
 
         let nomorAngka = parseInt(nomorInput);
 
-        // A. Kirim nomor ke database loket aktif
+        // Kirim nomor antrean langsung ke server internet
         db.ref('dataAntrean/' + loketTerpilih).set(nomorAngka);
 
-        // B. Tambah skor kinerja loket di laporan admin (+1)
+        // Tambahkan rekap kerja untuk halaman admin
         db.ref('hitunganKerjaLoket/' + loketTerpilih).transaction((currentValue) => {
             return (currentValue || 0) + 1;
         });
 
-        // C. Potong dari daftar ruangan jika nomor tersebut ada di dalam list
+        // Hapus dari daftar nomor antrean ruangan jika ada
         db.ref('nomorDalamRuangan').once('value').then((snapshot) => {
             let listNomor = snapshot.val() || [];
             let index = listNomor.indexOf(nomorAngka);
