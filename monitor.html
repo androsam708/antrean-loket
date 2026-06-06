@@ -34,7 +34,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
     const firebaseConfig = { databaseURL: "https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/" };
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const listNamaLoket = [
@@ -42,14 +42,13 @@
         "Loket F - 6", "Loket G - 7", "Loket H - 8", "Loket I - 9", "Loket J - 10"
     ];
 
-    // Realtime Render Loket
     db.ref('dataAntrean').on('value', (snapshot) => {
         let data = snapshot.val() || {};
         let grid = document.getElementById('monitorGrid');
         grid.innerHTML = "";
 
         listNamaLoket.forEach(loket => {
-            let nomor = data[loket] || "-";
+            let nomor = data[loket] !== undefined ? data[loket] : "-";
             let card = document.createElement('div');
             card.className = 'loket-card';
             let warnaNomor = (nomor === "-") ? "#c53030" : "#22543d";
@@ -63,11 +62,9 @@
         });
     });
 
-    // Realtime Render Daftar Ruangan
     db.ref('nomorDalamRuangan').on('value', (snapshot) => {
         let dataRuangan = snapshot.val() || [];
         let ruanganBox = document.getElementById('ruanganList');
-        
         if (dataRuangan.length === 0) {
             ruanganBox.innerHTML = "<span style='color:#a0aec0; font-style: italic; font-size:0.7em; font-weight:normal;'>Belum ada nomor yang dipanggil masuk ruangan</span>";
         } else {
