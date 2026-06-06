@@ -12,14 +12,9 @@
         label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
         select, input, button { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
         select:focus, input:focus { border-color: #3498db; outline: none; }
-        
         button { background-color: #3498db; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.3s; margin-top: 10px; }
         button:hover { background-color: #2980b9; }
-        
-        .btn-break { background-color: #e74c3c; margin-top: 10px; }
-        .btn-break:hover { background-color: #c0392b; }
-
-        .status-box { margin-top: 20px; padding: 15px; background: #e8f4f8; border-left: 5px solid #3498db; border-radius: 4px; display: block; }
+        .status-box { margin-top: 20px; padding: 15px; background: #e8f4f8; border-left: 5px solid #3498db; border-radius: 4px; display: none; }
     </style>
 </head>
 <body>
@@ -30,16 +25,16 @@
     <div class="form-group">
         <label for="pilihLoket">Pilih Loket:</label>
         <select id="pilihLoket" onchange="cekStatusLoket()">
-            <option value="Loket_A_1">Loket A / 1</option>
-            <option value="Loket_B_2">Loket B / 2</option>
-            <option value="Loket_C_3">Loket C / 3</option>
-            <option value="Loket_D_4">Loket D / 4</option>
-            <option value="Loket_E_5">Loket E / 5</option>
-            <option value="Loket_F_6">Loket F / 6</option>
-            <option value="Loket_G_7">Loket G / 7</option>
-            <option value="Loket_H_8">Loket H / 8</option>
-            <option value="Loket_I_9">Loket I / 9</option>
-            <option value="Loket_J_10">Loket J / 10</option>
+            <option value="Loket A - 1">Loket A / 1</option>
+            <option value="Loket B - 2">Loket B / 2</option>
+            <option value="Loket C - 3">Loket C / 3</option>
+            <option value="Loket D - 4">Loket D / 4</option>
+            <option value="Loket E - 5">Loket E / 5</option>
+            <option value="Loket F - 6">Loket F / 6</option>
+            <option value="Loket G - 7">Loket G / 7</option>
+            <option value="Loket H - 8">Loket H / 8</option>
+            <option value="Loket I - 9">Loket I / 9</option>
+            <option value="Loket J - 10">Loket J / 10</option>
         </select>
     </div>
 
@@ -49,29 +44,25 @@
     </div>
 
     <button onclick="updateAntreanManual()">Update Nomor Ini</button>
-    <button class="btn-break" onclick="kosongkanStatusLoket()">Istirahat / Kosongkan Loket</button>
 
     <div class="status-box" id="statusBox">
-        <span id="statusTeks">Menghubungkan ke database...</span>
+        <span id="statusTeks"></span>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-app.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-database.js"></script>
-
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
+    // Konfigurasi Database Online Sandbox
     const firebaseConfig = {
         databaseURL: "https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/"
     };
-    
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let dataLoketLokal = null;
+    let dataLoketLokal = {};
 
-    // Sinkronisasi data real-time
+    // Ambil data real-time dari server internet
     db.ref('dataAntrean').on('value', (snapshot) => {
         dataLoketLokal = snapshot.val() || {};
         cekStatusLoket();
@@ -79,18 +70,12 @@
 
     function cekStatusLoket() {
         let loketTerpilih = document.getElementById('pilihLoket').value;
+        let nomor = dataLoketLokal[loketTerpilih] || "-";
+        let statusBox = document.getElementById('statusBox');
         let statusTeks = document.getElementById('statusTeks');
-        
-        // Mengubah tampilan id database agar di layar tetap muncul tanda " / " yang rapi
-        let namaTampilan = loketTerpilih.replace(/_/g, " ").replace(" A ", " A / ").replace(" B ", " B / ").replace(" C ", " C / ").replace(" D ", " D / ").replace(" E ", " E / ").replace(" F ", " F / ").replace(" G ", " G / ").replace(" H ", " H / ").replace(" I ", " I / ").replace(" J ", " J / ");
 
-        if (!dataLoketLokal) {
-            statusTeks.innerHTML = "Memuat status antrean...";
-            return;
-        }
-
-        let nomor = dataLoketLokal[loketTerpilih] !== undefined ? dataLoketLokal[loketTerpilih] : "-";
-        statusTeks.innerHTML = `<strong>${namaTampilan}</strong> saat ini melayani Nomor: <strong>${nomor}</strong>`;
+        statusBox.style.display = "block";
+        statusTeks.innerHTML = `<strong>${loketTerpilih.replace(/-/g, '/')}</strong> saat ini melayani Nomor: <strong>${nomor}</strong>`;
     }
 
     function updateAntreanManual() {
@@ -104,15 +89,15 @@
 
         let nomorAngka = parseInt(nomorInput);
 
-        // Update langsung ke database Firebase
+        // A. Kirim nomor ke database loket aktif
         db.ref('dataAntrean/' + loketTerpilih).set(nomorAngka);
 
-        // Catat statistik kerja loket untuk admin
+        // B. Tambah skor kinerja loket di laporan admin (+1)
         db.ref('hitunganKerjaLoket/' + loketTerpilih).transaction((currentValue) => {
             return (currentValue || 0) + 1;
         });
 
-        // Hapus dari daftar nomor antrean dalam ruangan jika ada
+        // C. Potong dari daftar ruangan jika nomor tersebut ada di dalam list
         db.ref('nomorDalamRuangan').once('value').then((snapshot) => {
             let listNomor = snapshot.val() || [];
             let index = listNomor.indexOf(nomorAngka);
@@ -123,15 +108,6 @@
         });
 
         document.getElementById('nomorAntrean').value = ""; 
-    }
-
-    function kosongkanStatusLoket() {
-        let loketTerpilih = document.getElementById('pilihLoket').value;
-        
-        if (confirm(`Kosongkan status pelayanan untuk loket ini?`)) {
-            // Set kembali menjadi strip (-) saat istirahat/pulang
-            db.ref('dataAntrean/' + loketTerpilih).set("-");
-        }
     }
 </script>
 </body>
