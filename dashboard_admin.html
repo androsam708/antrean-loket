@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Manajemen & Monitor Admin</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; border-top: 5px solid #3498db; }
+        .stat-card.total { border-top-color: #2ecc71; }
+        .stat-card.ruangan { border-top-color: #f1c40f; }
+        .stat-card.posisi { border-top-color: #e74c3c; }
+        .stat-label { font-size: 0.9em; color: #7f8c8d; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
+        .stat-value { font-size: 2.5em; font-weight: 800; color: #2c3e50; }
+        .table-responsive { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h3 { margin-top: 0; color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 14px 16px; border-bottom: 1px solid #edf2f7; }
+        th { background-color: #f8fafc; color: #4a5568; font-weight: 700; text-transform: uppercase; font-size: 0.85em; }
+        .badge-aktif { background-color: #e2f8e9; color: #155724; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9em; }
+        .badge-kosong { background-color: #f8d7da; color: #721c24; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Monitor Utama & Dashboard Manajemen</h2>
+    
+    <div class="stats-grid">
+        <div class="stat-card total">
+            <div class="stat-label">Total Keseluruhan Dilayani</div>
+            <div class="stat-value" id="totalSemuaPanggilan">0</div>
+        </div>
+        <div class="stat-card ruangan">
+            <div class="stat-label">Total di Dalam Ruangan (Sisa)</div>
+            <div class="stat-value" id="totalDiRuangan">0</div>
+        </div>
+        <div class="stat-card posisi">
+            <div class="stat-label">Terlayani Sampai Nomor (Tertinggi)</div>
+            <div class="stat-value" id="nomorTertinggi">-</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <h3>Rincian Performa Kerja 10 Loket</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nama Loket</th>
+                    <th>Nomor yang Sedang Dilayani</th>
+                    <th>Total Antrean Diselesaikan</th>
+                </tr>
+            </thead>
+            <tbody id="tabelBodyLoket"></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    const firebaseConfig = { databaseURL: "https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const listNamaLoket = [
+        "Loket A - 1", "Loket B - 2", "Loket C - 3", "Loket D - 4", "Loket E - 5",
+        "Loket F - 6", "Loket G - 7", "Loket H - 8", "Loket I - 9", "Loket J - 10"
+    ];
+
+    // Baca gabungan data secara real-time
+    db.ref().on('value', (snapshot) => {
+        let master = snapshot.val() || {};
+        let dataLoket = master.dataAntrean || {};
+        let dataRuangan = master.nomorDalamRuangan || [];
+        let hitunganKerja = master.hitunganKerjaLoket || {};
+
+        document.getElementById('totalDiRuangan').innerText = dataRuangan.length;
+
+        let maxNomor = 0;
+        let totalPanggilanGabungan = 0;
+        let tbody = document.getElementById('tabelBodyLoket');
+        tbody.innerHTML = "";
+
+        listNamaLoket.forEach(loket => {
+            let nomorAktif = dataLoket[loket] || "-";
+            let skorLoket = hitunganKerja[loket] || 0;
+            totalPanggilanGabungan += skorLoket;
+
+            if (nomorAktif !== "-" && !isNaN(nomorAktif)) {
+                let num = parseInt(nomorAktif);
+                if (num > maxNomor) maxNomor = num;
+            }
+
+            let badgeStyle = (nomorAktif === "-") ? `<span class="badge-kosong">-</span>` : `<span class="badge-aktif">${nomorAktif}</span>`;
+
+            let row = `<tr>
+                <td style="font-weight: bold; color: #1a365d;">${loket.replace(/-/g, '/')}</td>
+                <td>${badgeStyle}</td>
+                <td style="font-weight: bold; font-size: 1.1em; color: #2b6cb0;">${skorLoket} Transaksi</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+
+        document.getElementById('totalSemuaPanggilan').innerText = totalPanggilanGabungan + " Panggilan";
+        document.getElementById('nomorTertinggi').innerText = (maxNomor === 0) ? "Belum Ada" : "No. " + maxNomor;
+    });
+</script>
+</body>
+</html>
