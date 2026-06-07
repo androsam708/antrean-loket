@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Display Antrean</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Segoe UI, sans-serif;
+    background:#0f172a;
+    color:white;
+    min-height:100vh;
+}
+
+.header{
+    background:#1e3a8a;
+    text-align:center;
+    padding:20px;
+}
+
+.header h1{
+    font-size:48px;
+}
+
+.header h2{
+    margin-top:10px;
+    color:#cbd5e1;
+}
+
+.jam{
+    font-size:30px;
+    margin-top:10px;
+}
+
+.grid{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(300px,1fr));
+
+    gap:20px;
+
+    padding:20px;
+}
+
+.card{
+
+    background:#1e293b;
+
+    border-radius:20px;
+
+    padding:25px;
+
+    text-align:center;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.4);
+}
+
+.card h3{
+
+    font-size:32px;
+
+    margin-bottom:15px;
+}
+
+.nomor{
+
+    font-size:90px;
+
+    font-weight:bold;
+
+    color:#38bdf8;
+}
+
+.status{
+
+    margin-top:15px;
+
+    font-size:24px;
+
+    color:#cbd5e1;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="header">
+
+<h1>🏢 SISTEM ANTREAN ONLINE</h1>
+
+<h2>Monitor Pelayanan Loket</h2>
+
+<div class="jam" id="jam"></div>
+
+</div>
+
+<div class="grid">
+
+<div class="card">
+<h3>Loket A / 1</h3>
+<div class="nomor" id="loketA">-</div>
+<div class="status">Sedang Dilayani</div>
+</div>
+
+<div class="card">
+<h3>Loket B / 2</h3>
+<div class="nomor" id="loketB">-</div>
+<div class="status">Sedang Dilayani</div>
+</div>
+
+<div class="card">
+<h3>Loket C / 3</h3>
+<div class="nomor" id="loketC">-</div>
+<div class="status">Sedang Dilayani</div>
+</div>
+
+<div class="card">
+<h3>Loket D / 4</h3>
+<div class="nomor" id="loketD">-</div>
+<div class="status">Sedang Dilayani</div>
+</div>
+
+<div class="card">
+<h3>Loket E / 5</h3>
+<div class="nomor" id="loketE">-</div>
+<div class="status">Sedang Dilayani</div>
+</div>
+
+<div class="card">
+<h3>Loket F / 6</h3>
+<div class="nomor" id="loketF">-</div>
+<div class="status">Sedang Dilayani</div>
+</div>
+
+<div class="card">
+<h3>Loket G / 7</h3>
+<div class="nomor" id="loketG">-</div>
+<div class="status">Sedang Dilayani</div>
+</div>
+
+<div class="card">
+<h3>Loket H / 8</h3>
+<div class="nomor" id="loketH">-</div>
+<div class="status">Sedang Dilayani</div>
+</div>
+
+<div class="card">
+<h3>Loket I / 9</h3>
+<div class="nomor" id="loketI">-</div>
+<div class="status">Sedang Dilayani</div>
+</div>
+
+<div class="card">
+<h3>Loket J / 10</h3>
+<div class="nomor" id="loketJ">-</div>
+<div class="status">Sedang Dilayani</div>
+</div>
+
+</div>
+
+<script>
+
+function updateJam(){
+
+    let now = new Date();
+
+    document.getElementById("jam").innerHTML =
+    now.toLocaleTimeString("id-ID");
+}
+
+setInterval(updateJam,1000);
+
+updateJam();
+
+</script>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+
+const firebaseConfig = {
+
+databaseURL:
+"https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/"
+
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+db.ref("dataAntrean").on("value",(snapshot)=>{
+
+    let data = snapshot.val() || {};
+
+    document.getElementById("loketA").innerText =
+    data["Loket A - 1"] || "-";
+
+    document.getElementById("loketB").innerText =
+    data["Loket B - 2"] || "-";
+
+    document.getElementById("loketC").innerText =
+    data["Loket C - 3"] || "-";
+
+    document.getElementById("loketD").innerText =
+    data["Loket D - 4"] || "-";
+
+    document.getElementById("loketE").innerText =
+    data["Loket E - 5"] || "-";
+
+    document.getElementById("loketF").innerText =
+    data["Loket F - 6"] || "-";
+
+    document.getElementById("loketG").innerText =
+    data["Loket G - 7"] || "-";
+
+    document.getElementById("loketH").innerText =
+    data["Loket H - 8"] || "-";
+
+    document.getElementById("loketI").innerText =
+    data["Loket I - 9"] || "-";
+
+    document.getElementById("loketJ").innerText =
+    data["Loket J - 10"] || "-";
+
+});
+
+</script>
+
+</body>
+</html>
