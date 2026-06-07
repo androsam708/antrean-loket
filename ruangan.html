@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Ruangan Tunggu</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Segoe UI',sans-serif;
+    background:linear-gradient(135deg,#0f172a,#1e3a8a);
+    min-height:100vh;
+    padding:20px;
+}
+
+.container{
+    max-width:1000px;
+    margin:auto;
+    background:white;
+    border-radius:20px;
+    padding:30px;
+    box-shadow:0 15px 40px rgba(0,0,0,.25);
+}
+
+h1{
+    text-align:center;
+    color:#1e293b;
+    margin-bottom:10px;
+}
+
+.subjudul{
+    text-align:center;
+    color:#64748b;
+    margin-bottom:25px;
+}
+
+.card{
+    background:#f8fafc;
+    border-radius:15px;
+    padding:20px;
+    margin-bottom:20px;
+    border:1px solid #e2e8f0;
+}
+
+.card h3{
+    margin-bottom:15px;
+    color:#1e293b;
+}
+
+label{
+    display:block;
+    margin-bottom:6px;
+    font-weight:bold;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    margin-bottom:10px;
+}
+
+button{
+    width:100%;
+    border:none;
+    padding:14px;
+    border-radius:10px;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+    font-size:15px;
+}
+
+.btn-biru{
+    background:#2563eb;
+}
+
+.btn-hijau{
+    background:#16a34a;
+}
+
+.btn-merah{
+    background:#dc2626;
+}
+
+.btn-orange{
+    background:#ea580c;
+}
+
+button:hover{
+    opacity:.9;
+}
+
+.statistik{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.jumlah{
+    font-size:48px;
+    font-weight:bold;
+    color:#2563eb;
+}
+
+.list-area{
+    background:#f8fafc;
+    border-radius:15px;
+    padding:20px;
+    min-height:150px;
+}
+
+.nomor{
+    display:inline-block;
+    background:#2563eb;
+    color:white;
+    padding:10px 15px;
+    margin:5px;
+    border-radius:10px;
+    font-weight:bold;
+    font-size:18px;
+}
+
+.status{
+    margin-top:15px;
+    text-align:center;
+    font-weight:bold;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>🏢 Panel Ruangan Tunggu</h1>
+
+<div class="subjudul">
+Manajemen Peserta yang Sudah Masuk Ruangan
+</div>
+
+<div class="statistik">
+<div>Jumlah Peserta Dalam Ruangan</div>
+<div class="jumlah" id="jumlahPeserta">0</div>
+</div>
+
+<div class="card">
+
+<h3>📢 Tambah Rentang Nomor</h3>
+
+<label>Dari Nomor</label>
+<input type="number" id="nomorAwal">
+
+<label>Sampai Nomor</label>
+<input type="number" id="nomorAkhir">
+
+<button
+class="btn-biru"
+onclick="tambahRentang()">
+Masukkan ke Ruangan
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>➕ Tambah Nomor Susulan</h3>
+
+<input
+type="text"
+id="nomorSusulan"
+placeholder="Contoh: 4 18 21 atau 4,18,21">
+
+<button
+class="btn-hijau"
+onclick="tambahSusulan()">
+Tambah Susulan
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>➖ Hapus Nomor dari Ruangan</h3>
+
+<input
+type="text"
+id="hapusNomor"
+placeholder="Contoh: 4 18 21 atau 4,18,21">
+
+<button
+class="btn-merah"
+onclick="hapusNomor()">
+Hapus Nomor
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>🗑️ Reset Ruangan</h3>
+
+<button
+class="btn-orange"
+onclick="kosongkanRuangan()">
+Kosongkan Semua Nomor
+</button>
+
+</div>
+
+<div class="status" id="status"></div>
+
+<div class="list-area">
+
+<h3>Nomor Dalam Ruangan</h3>
+
+<div id="listNomor"></div>
+
+</div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+
+const firebaseConfig = {
+
+databaseURL:
+"https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/"
+
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+let nomorDalamRuangan = [];
+
+db.ref("nomorDalamRuangan")
+.on("value",(snapshot)=>{
+
+    nomorDalamRuangan =
+    snapshot.val() || [];
+
+    tampilkanDaftar();
+});
+
+function tampilkanDaftar(){
+
+    nomorDalamRuangan.sort((a,b)=>a-b);
+
+    let html="";
+
+    nomorDalamRuangan.forEach((nomor)=>{
+
+        html +=
+        `<span class="nomor">${nomor}</span>`;
+
+    });
+
+    document.getElementById(
+        "listNomor"
+    ).innerHTML = html;
+
+    document.getElementById(
+        "jumlahPeserta"
+    ).innerText =
+    nomorDalamRuangan.length;
+}
+
+function simpan(){
+
+    db.ref("nomorDalamRuangan")
+    .set(nomorDalamRuangan);
+}
+
+function tambahRentang(){
+
+    let awal =
+    parseInt(
+    document.getElementById(
+    "nomorAwal").value);
+
+    let akhir =
+    parseInt(
+    document.getElementById(
+    "nomorAkhir").value);
+
+    if(isNaN(awal) || isNaN(akhir)){
+
+        alert(
+        "Masukkan nomor awal dan akhir."
+        );
+
+        return;
+    }
+
+    for(
+        let i=awal;
+        i<=akhir;
+        i++
+    ){
+
+        if(
+        !nomorDalamRuangan.includes(i)
+        ){
+
+            nomorDalamRuangan.push(i);
+        }
+    }
+
+    simpan();
+
+    document.getElementById(
+    "status").innerHTML =
+    "✅ Rentang nomor berhasil ditambahkan";
+}
+
+function tambahSusulan(){
+
+    let teks =
+    document.getElementById(
+    "nomorSusulan"
+    ).value.trim();
+
+    if(teks===""){
+        return;
+    }
+
+    let data =
+    teks.split(/[\s,]+/);
+
+    data.forEach((item)=>{
+
+        let nomor =
+        parseInt(item);
+
+        if(
+        !isNaN(nomor)
+        &&
+        !nomorDalamRuangan.includes(nomor)
+        ){
+
+            nomorDalamRuangan.push(nomor);
+        }
+    });
+
+    simpan();
+
+    document.getElementById(
+    "nomorSusulan"
+    ).value="";
+
+    document.getElementById(
+    "status"
+    ).innerHTML =
+    "✅ Nomor susulan ditambahkan";
+}
+
+function hapusNomor(){
+
+    let teks =
+    document.getElementById(
+    "hapusNomor"
+    ).value.trim();
+
+    if(teks===""){
+        return;
+    }
+
+    let data =
+    teks.split(/[\s,]+/);
+
+    data.forEach((item)=>{
+
+        let nomor =
+        parseInt(item);
+
+        if(!isNaN(nomor)){
+
+            nomorDalamRuangan =
+            nomorDalamRuangan.filter(
+            n => n !== nomor
+            );
+        }
+
+    });
+
+    simpan();
+
+    document.getElementById(
+    "hapusNomor"
+    ).value="";
+
+    document.getElementById(
+    "status"
+    ).innerHTML =
+    "🗑️ Nomor berhasil dihapus";
+}
+
+function kosongkanRuangan(){
+
+    if(
+    !confirm(
+    "Yakin ingin mengosongkan seluruh ruangan?"
+    )
+    ){
+        return;
+    }
+
+    nomorDalamRuangan = [];
+
+    simpan();
+
+    document.getElementById(
+    "status"
+    ).innerHTML =
+    "🗑️ Ruangan berhasil dikosongkan";
+}
+
+</script>
+
+</body>
+</html>
