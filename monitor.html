@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Tampilan Antrean Utama</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; color: #2c3e50; margin: 0; padding: 20px; box-sizing: border-box;}
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 25px; font-size: 2.5em; text-transform: uppercase; letter-spacing: 2px; font-weight: 800; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; max-width: 1600px; margin: 0 auto 35px auto; }
+        .loket-card { background: #ffffff; border-radius: 14px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); text-align: center; padding: 20px; border: 2px solid #e2e8f0; border-bottom: 8px solid #3498db; }
+        .nama-loket { font-size: 2em; font-weight: 900; color: #1a365d; margin-bottom: 10px; background: #ebf8ff; padding: 10px; border-radius: 8px; letter-spacing: 1px; }
+        .nomor-antrean { font-size: 4.5em; font-weight: 800; margin: 5px 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        .label-terlayani { font-size: 0.9em; color: #718096; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+
+    <h1>Tampilan Monitor Utama</h1>
+    <div class="grid-container" id="monitorGrid"></div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    const firebaseConfig = { databaseURL: "https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const listNamaLoket = ["Loket_A_1", "Loket_B_2", "Loket_C_3", "Loket_D_4", "Loket_E_5", "Loket_F_6", "Loket_G_7", "Loket_H_8", "Loket_I_9", "Loket_J_10"];
+
+    db.ref('dataAntrean').on('value', (snapshot) => {
+        let data = snapshot.val() || {};
+        let grid = document.getElementById('monitorGrid');
+        grid.innerHTML = "";
+
+        listNamaLoket.forEach(loket => {
+            let nomor = data[loket] !== undefined ? data[loket] : "-";
+            let card = document.createElement('div');
+            card.className = 'loket-card';
+            let warnaNomor = (nomor === "-") ? "#c53030" : "#22543d";
+            let namaTampilan = loket.replace(/_/g, ' ');
+
+            card.innerHTML = `
+                <div class="nama-loket">${namaTampilan}</div>
+                <div class="label-terlayani">Sedang Dilayani</div>
+                <div class="nomor-antrean" style="color: ${warnaNomor}">${nomor}</div>
+            `;
+            grid.appendChild(card);
+        });
+    });
+</script>
+</body>
+</html>
