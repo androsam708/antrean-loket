@@ -3,95 +3,238 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Display Antrean</title>
 
 <style>
 
 *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+margin:0;
+padding:0;
+box-sizing:border-box;
 }
 
 body{
-    font-family:Segoe UI, sans-serif;
-    background:#0f172a;
-    color:white;
-    min-height:100vh;
+
+font-family:'Segoe UI',sans-serif;
+
+background:#0f172a;
+
+color:white;
+
+min-height:100vh;
 }
 
 .header{
-    background:#1e3a8a;
-    text-align:center;
-    padding:20px;
+
+background:linear-gradient(
+90deg,
+#1d4ed8,
+#2563eb
+);
+
+padding:20px;
+
+text-align:center;
+
+box-shadow:0 3px 15px rgba(0,0,0,.3);
 }
 
 .header h1{
-    font-size:48px;
+
+font-size:42px;
 }
 
-.header h2{
-    margin-top:10px;
-    color:#cbd5e1;
+.header p{
+
+margin-top:5px;
+
+font-size:18px;
 }
 
-.jam{
-    font-size:30px;
-    margin-top:10px;
+#jam{
+
+font-size:28px;
+
+margin-top:10px;
+
+font-weight:bold;
 }
 
-.grid{
+.statusFirebase{
 
-    display:grid;
+margin-top:10px;
 
-    grid-template-columns:
-    repeat(auto-fit,minmax(300px,1fr));
-
-    gap:20px;
-
-    padding:20px;
+font-size:14px;
 }
 
-.card{
+.main{
 
-    background:#1e293b;
+display:grid;
 
-    border-radius:20px;
+grid-template-columns:
+1fr 1fr;
 
-    padding:25px;
+gap:20px;
 
-    text-align:center;
-
-    box-shadow:0 5px 15px rgba(0,0,0,.4);
+padding:20px;
 }
 
-.card h3{
+.panel{
 
-    font-size:32px;
+background:#1e293b;
 
-    margin-bottom:15px;
+border-radius:20px;
+
+padding:20px;
+
+box-shadow:0 10px 25px rgba(0,0,0,.3);
+}
+
+.panel h2{
+
+text-align:center;
+
+margin-bottom:20px;
+
+font-size:28px;
+}
+
+.totalPeserta{
+
+text-align:center;
+
+font-size:18px;
+
+margin-bottom:15px;
+}
+
+.nomorContainer{
+
+display:flex;
+
+flex-wrap:wrap;
+
+gap:10px;
+
+justify-content:center;
 }
 
 .nomor{
 
-    font-size:90px;
+background:#2563eb;
 
-    font-weight:bold;
+padding:12px 18px;
 
-    color:#38bdf8;
+border-radius:10px;
+
+font-size:24px;
+
+font-weight:bold;
+
+min-width:70px;
+
+text-align:center;
 }
 
-.status{
+.loketGrid{
 
-    margin-top:15px;
+display:grid;
 
-    font-size:24px;
+grid-template-columns:
+repeat(2,1fr);
 
-    color:#cbd5e1;
+gap:15px;
+}
+
+.loketCard{
+
+background:#334155;
+
+border-radius:15px;
+
+padding:15px;
+
+text-align:center;
+
+transition:.3s;
+}
+
+.loketNama{
+
+font-size:20px;
+
+font-weight:bold;
+}
+
+.loketNomor{
+
+font-size:48px;
+
+font-weight:bold;
+
+margin-top:10px;
+
+color:#38bdf8;
+}
+
+.blink{
+
+animation:blinkAnim 1s linear infinite;
+}
+
+@keyframes blinkAnim{
+
+0%{
+transform:scale(1);
+}
+
+50%{
+transform:scale(1.08);
+background:#2563eb;
+}
+
+100%{
+transform:scale(1);
+}
+
+}
+
+.footer{
+
+padding:10px;
+
+text-align:center;
+
+font-size:13px;
+
+color:#cbd5e1;
+}
+
+@media(max-width:900px){
+
+.main{
+
+grid-template-columns:1fr;
+}
+
+.header h1{
+
+font-size:28px;
+}
+
+.loketNomor{
+
+font-size:36px;
+}
+
+.nomor{
+
+font-size:18px;
+}
 }
 
 </style>
-
 </head>
 <body>
 
@@ -99,98 +242,118 @@ body{
 
 <h1>🏢 SISTEM ANTREAN ONLINE</h1>
 
-<h2>Monitor Pelayanan Loket</h2>
+<p>Monitor Pelayanan Loket</p>
 
-<div class="jam" id="jam"></div>
+<div id="jam"></div>
 
-</div>
+<div
+class="statusFirebase"
+id="firebaseStatus">
 
-<div class="grid">
-
-<div class="card">
-<h3>Loket A / 1</h3>
-<div class="nomor" id="loketA">-</div>
-<div class="status">Sedang Dilayani</div>
-</div>
-
-<div class="card">
-<h3>Loket B / 2</h3>
-<div class="nomor" id="loketB">-</div>
-<div class="status">Sedang Dilayani</div>
-</div>
-
-<div class="card">
-<h3>Loket C / 3</h3>
-<div class="nomor" id="loketC">-</div>
-<div class="status">Sedang Dilayani</div>
-</div>
-
-<div class="card">
-<h3>Loket D / 4</h3>
-<div class="nomor" id="loketD">-</div>
-<div class="status">Sedang Dilayani</div>
-</div>
-
-<div class="card">
-<h3>Loket E / 5</h3>
-<div class="nomor" id="loketE">-</div>
-<div class="status">Sedang Dilayani</div>
-</div>
-
-<div class="card">
-<h3>Loket F / 6</h3>
-<div class="nomor" id="loketF">-</div>
-<div class="status">Sedang Dilayani</div>
-</div>
-
-<div class="card">
-<h3>Loket G / 7</h3>
-<div class="nomor" id="loketG">-</div>
-<div class="status">Sedang Dilayani</div>
-</div>
-
-<div class="card">
-<h3>Loket H / 8</h3>
-<div class="nomor" id="loketH">-</div>
-<div class="status">Sedang Dilayani</div>
-</div>
-
-<div class="card">
-<h3>Loket I / 9</h3>
-<div class="nomor" id="loketI">-</div>
-<div class="status">Sedang Dilayani</div>
-</div>
-
-<div class="card">
-<h3>Loket J / 10</h3>
-<div class="nomor" id="loketJ">-</div>
-<div class="status">Sedang Dilayani</div>
+🔄 Menghubungkan...
 </div>
 
 </div>
 
-<script>
+<div class="main">
 
-function updateJam(){
+<div class="panel">
 
-    let now = new Date();
+<h2>📢 Nomor Dalam Ruangan</h2>
 
-    document.getElementById("jam").innerHTML =
-    now.toLocaleTimeString("id-ID");
-}
+<div
+class="totalPeserta">
 
-setInterval(updateJam,1000);
+Jumlah:
+<span id="jumlahPeserta">
+0
+</span>
+Peserta
 
-updateJam();
+</div>
 
-</script>
+<div
+class="nomorContainer"
+id="nomorDalamRuangan">
+
+</div>
+
+</div>
+
+<div class="panel">
+
+<h2>🏢 Sedang Dilayani</h2>
+
+<div class="loketGrid">
+
+<div class="loketCard" id="cardA">
+<div class="loketNama">Loket A</div>
+<div class="loketNomor" id="A">-</div>
+</div>
+
+<div class="loketCard" id="cardB">
+<div class="loketNama">Loket B</div>
+<div class="loketNomor" id="B">-</div>
+</div>
+
+<div class="loketCard" id="cardC">
+<div class="loketNama">Loket C</div>
+<div class="loketNomor" id="C">-</div>
+</div>
+
+<div class="loketCard" id="cardD">
+<div class="loketNama">Loket D</div>
+<div class="loketNomor" id="D">-</div>
+</div>
+
+<div class="loketCard" id="cardE">
+<div class="loketNama">Loket E</div>
+<div class="loketNomor" id="E">-</div>
+</div>
+
+<div class="loketCard" id="cardF">
+<div class="loketNama">Loket F</div>
+<div class="loketNomor" id="F">-</div>
+</div>
+
+<div class="loketCard" id="cardG">
+<div class="loketNama">Loket G</div>
+<div class="loketNomor" id="G">-</div>
+</div>
+
+<div class="loketCard" id="cardH">
+<div class="loketNama">Loket H</div>
+<div class="loketNomor" id="H">-</div>
+</div>
+
+<div class="loketCard" id="cardI">
+<div class="loketNama">Loket I</div>
+<div class="loketNomor" id="I">-</div>
+</div>
+
+<div class="loketCard" id="cardJ">
+<div class="loketNama">Loket J</div>
+<div class="loketNomor" id="J">-</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="footer">
+
+Realtime Firebase Display
+
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
 
-const firebaseConfig = {
+const firebaseConfig={
 
 databaseURL:
 "https://antrean-loket-default-rtdb.asia-southeast1.firebasedatabase.app/"
@@ -199,41 +362,234 @@ databaseURL:
 
 firebase.initializeApp(firebaseConfig);
 
-const db = firebase.database();
+const db=firebase.database();
 
-db.ref("dataAntrean").on("value",(snapshot)=>{
+let nomorLama={};
 
-    let data = snapshot.val() || {};
+function updateJam(){
 
-    document.getElementById("loketA").innerText =
-    data["Loket A - 1"] || "-";
+document.getElementById("jam")
+.innerHTML=
+new Date()
+.toLocaleTimeString(
+'id-ID'
+);
 
-    document.getElementById("loketB").innerText =
-    data["Loket B - 2"] || "-";
+}
 
-    document.getElementById("loketC").innerText =
-    data["Loket C - 3"] || "-";
+setInterval(updateJam,1000);
 
-    document.getElementById("loketD").innerText =
-    data["Loket D - 4"] || "-";
+updateJam();
 
-    document.getElementById("loketE").innerText =
-    data["Loket E - 5"] || "-";
+db.ref(".info/connected")
+.on("value",(snap)=>{
 
-    document.getElementById("loketF").innerText =
-    data["Loket F - 6"] || "-";
+document.getElementById(
+"firebaseStatus"
+).innerHTML=
 
-    document.getElementById("loketG").innerText =
-    data["Loket G - 7"] || "-";
+snap.val()
+?
+"🟢 Terhubung ke Firebase"
+:
+"🔴 Tidak Terhubung";
 
-    document.getElementById("loketH").innerText =
-    data["Loket H - 8"] || "-";
+});
 
-    document.getElementById("loketI").innerText =
-    data["Loket I - 9"] || "-";
+function bunyikan(
+nomor,
+loket
+){
 
-    document.getElementById("loketJ").innerText =
-    data["Loket J - 10"] || "-";
+if(
+!nomor
+||
+nomor=="-"
+){
+return;
+}
+
+let teks=
+`Nomor antrean ${nomor} menuju ${loket}`;
+
+let suara=
+new SpeechSynthesisUtterance(
+teks
+);
+
+suara.lang="id-ID";
+
+speechSynthesis.speak(
+suara
+);
+
+}
+
+db.ref("dataAntrean")
+.on("value",(snapshot)=>{
+
+let data=
+snapshot.val()||{};
+
+updateLoket(
+"A",
+"Loket A - 1",
+data
+);
+
+updateLoket(
+"B",
+"Loket B - 2",
+data
+);
+
+updateLoket(
+"C",
+"Loket C - 3",
+data
+);
+
+updateLoket(
+"D",
+"Loket D - 4",
+data
+);
+
+updateLoket(
+"E",
+"Loket E - 5",
+data
+);
+
+updateLoket(
+"F",
+"Loket F - 6",
+data
+);
+
+updateLoket(
+"G",
+"Loket G - 7",
+data
+);
+
+updateLoket(
+"H",
+"Loket H - 8",
+data
+);
+
+updateLoket(
+"I",
+"Loket I - 9",
+data
+);
+
+updateLoket(
+"J",
+"Loket J - 10",
+data
+);
+
+});
+
+function updateLoket(
+id,
+firebaseKey,
+data
+){
+
+let nomor=
+data[firebaseKey]||"-";
+
+document
+.getElementById(id)
+.innerText=nomor;
+
+if(
+nomorLama[id]
+!=nomor
+&&
+nomor!="-"
+){
+
+let card=
+document.getElementById(
+"card"+id
+);
+
+card.classList.add(
+"blink"
+);
+
+setTimeout(()=>{
+
+card.classList.remove(
+"blink"
+);
+
+},5000);
+
+bunyikan(
+nomor,
+"Loket "+id
+);
+
+}
+
+nomorLama[id]=nomor;
+
+}
+
+db.ref("nomorDalamRuangan")
+.on("value",(snapshot)=>{
+
+let list=
+snapshot.val()||[];
+
+db.ref("dataAntrean")
+.once("value")
+.then((snap)=>{
+
+let data=
+snap.val()||{};
+
+let sedangDipanggil=
+Object.values(data);
+
+list=list.filter(
+n=>
+!sedangDipanggil.includes(n)
+);
+
+list.sort(
+(a,b)=>a-b
+);
+
+document
+.getElementById(
+"jumlahPeserta"
+)
+.innerText=
+list.length;
+
+let html="";
+
+list.forEach((n)=>{
+
+html+=
+`<div class="nomor">${n}</div>`;
+
+});
+
+document
+.getElementById(
+"nomorDalamRuangan"
+)
+.innerHTML=
+html;
+
+});
 
 });
 
