@@ -108,6 +108,7 @@ function updateAntreanManual(){
 
  nomor=parseInt(nomor);
 
+ // 1. Update nomor di loket aktif
  db.ref("dataAntrean/"+loket).set(nomor)
  .then(()=>{
    tampilPesan("✅ Nomor berhasil diperbarui","green");
@@ -118,15 +119,38 @@ function updateAntreanManual(){
    console.error(err);
  });
 
+ // 2. Otomatis hapus nomor ini dari daftar 'nomorDalamRuangan' di Firebase agar tidak balik lagi
+ db.ref("nomorDalamRuangan").once("value").then((snapshot) => {
+   let listNomor = snapshot.val() || [];
+   if (listNomor.includes(nomor)) {
+     let listBaru = listNomor.filter(n => n !== nomor);
+     db.ref("nomorDalamRuangan").set(listBaru);
+   }
+ });
+
  db.ref("hitunganKerjaLoket/"+loket)
  .transaction(current=>(current||0)+1);
 }
 
 function kosongkanLoket(){
  let loket=document.getElementById("pilihLoket").value;
+ let nomorAktifSekarang = dataLoketLokal[loket];
 
  if(!confirm("Yakin ingin mengosongkan antrean pada "+loket+" ?")) return;
 
+ // 1. Hapus nomor aktif dari daftar ruang tunggu terlebih dahulu sebelum loket dikosongkan
+ if(nomorAktifSekarang && nomorAktifSekarang !== "-") {
+   let nomorAngka = parseInt(nomorAktifSekarang);
+   db.ref("nomorDalamRuangan").once("value").then((snapshot) => {
+     let listNomor = snapshot.val() || [];
+     if (listNomor.includes(nomorAngka)) {
+       let listBaru = listNomor.filter(n => n !== nomorAngka);
+       db.ref("nomorDalamRuangan").set(listBaru);
+     }
+   });
+ }
+
+ // 2. Kosongkan loket di Firebase
  db.ref("dataAntrean/"+loket).set(null)
  .then(()=>tampilPesan("🗑️ Antrean berhasil dikosongkan","orange"))
  .catch(err=>{
