@@ -75,7 +75,7 @@ let dataLoketLokal={};
 
 db.ref(".info/connected").on("value",(snap)=>{
  document.getElementById("firebaseStatus").innerHTML =
- snap.val() ? "🟢 Terhubung ke Firebase" : "🔴 Tidak Terhubung";
+ snap.val() ? "🟢 Terhubung ke System" : "🔴 Tidak Terhubung";
 });
 
 db.ref("dataAntrean").on("value",(snapshot)=>{
